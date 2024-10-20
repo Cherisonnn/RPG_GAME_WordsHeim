@@ -30,6 +30,26 @@ std::string locationName(Location loc);
 void ShowLocation(LOC& loc);
 Location currentLocation;
 
+class Prop_Weapon {//武器
+public:
+	string NAME;
+	int wATK;
+	int Durabily;
+	int n;
+	int cost;
+	void setWeapon(string sname, int sa, int sd, int sn, int sc) {
+		NAME = sname;
+		wATK = sa;
+		Durabily = sd;
+		n = sn;
+		cost = sc;
+	}
+}w0001;
+
+void SetWeapon() {//武器：设置
+	w0001.setWeapon("克里斯学徒的试做铜剑", 2, 15, 0, 12);
+}
+
 class player {
 public:
 	int HP;
@@ -41,6 +61,7 @@ public:
 	int Exp;
 	int ExpMax, LevelUp_n;
 	string position;
+	Prop_Weapon hold;
 	void LevelUp() {
 		LevelUp_n = 0;
 		while (Exp > ExpMax) {
@@ -89,12 +110,58 @@ public:
 		system("cls");
 		SelectMove();
 	}
+	void GearWeapon(Prop_Weapon w) {
+		oplayer.hold = w;
+	}
+	void ShowGear() {
+		int key,gkey;
+		cout << "1:首: " << endl;
+		cout << "2:身: " << endl;
+		cout << "3:手: " << endl;
+		cout << "4:足: " << endl;
+		cout << "5:手持: " << hold.NAME<<endl;
+		cout << "6:返回" << endl;
+		cin >> key;
+		system("cls");
+		switch (key) {
+		case(1):
+		case(2):
+		case(3):
+		case(4):
+		case(5):
+			cout << "当前装备：" << hold.NAME << endl;
+			cout << "可装备：" << endl;
+			cout << "1: " << w0001.NAME <<" 数量 "<<w0001.n<<endl;
+			cout << "2:返回 "<< endl;
+			cin >> key;
+			system("cls");
+			switch (key) {
+			case(1):
+				GearWeapon(w0001);
+				ShowGear();
+			case(2):
+				ShowGear();
+			default:
+				cout << "无效输入，请重新选择！" << endl;
+				cin.clear();
+				cin.ignore(1024, '\n');
+				ShowGear();
+			}
+		case(6):
+			SelectMove();
+		default:
+			cout << "无效输入，请重新选择！" << endl;
+			cin.clear();
+			cin.ignore(1024, '\n');
+			ShowGear();
+		}
+	}
 	void ShowProperty() {
 		int key;
 		cout << "您的等级为<" << oplayer.Lev <<">" << endl;
 		cout << "HP:" << oplayer.HP << "/"<<oplayer.HPmax<<endl;
 		cout << "DEF:" << oplayer.DEF << endl;
-		cout << "ATK:" << oplayer.ATK << endl;
+		cout << "ATK:" << oplayer.ATK <<" + "<<oplayer.hold.wATK<< endl;
 		cout << "Exp:" << oplayer.Exp << "/" << oplayer.ExpMax << endl;
 		cout << "输入1以返回" << endl;
 		cin >> key;
@@ -164,7 +231,6 @@ void SetLocation_Wild() {//地点：野外探索参数设置
 	LW001.setLocation_Wild(Slime, Goblin, Elite_Goblin, 1);
 	LW002.setLocation_Wild(Slime, Strong_Goblin, Elite_Goblin, 2);
 }
-
 class Prop_Potion {
 public:
 	int n;
@@ -204,6 +270,7 @@ void startGame() {
 	random_device rd;
 	mt19937 gen(rd());
 	oplayer.InitProperty();
+	SetWeapon();
 	setMonster();
 	PPsetProperty();
 	SetLocation_Wild();
@@ -265,13 +332,13 @@ void SelectMove_Fight(monster& m) {
 	system("cls");
 	switch (SMF_key) {
 	case(1):
-		if (m.HP - oplayer.ATK + m.DEF >= m.HP) {
+		if (m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF >= m.HP) {
 			m.HP = m.HP - 1;
 			cout << "你 攻击了 "<<m.NAME<<" 并造成了 1 点伤害！" << endl;
 		}
 		else {
-			m.HP = m.HP - oplayer.ATK + m.DEF;
-			cout << "你 攻击了 " << m.NAME << " 造成了 " << oplayer.ATK - m.DEF
+			m.HP = m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF;
+			cout << "你 攻击了 " << m.NAME << " 造成了 " << oplayer.ATK +oplayer.hold.wATK- m.DEF
 				<< " 点伤害!" << endl;
 		}break;
 	case(2):
@@ -514,16 +581,54 @@ void PropShop() {
 		PropShop();
 	}
 }
+void WeaponShop() {
+	int key, n;
+	cout << "请选择您要购买的商品！" << endl;
+	cout << "1：" <<w0001.NAME<<" " << w0001.cost << "coin / 1\n"
+		<< "2:返回" << endl;
+	cin >> key;
+	system("cls");
+	switch (key) {
+	case(1):
+		cout << "请输入购买数量" << endl;
+		cin >> n;
+		system("cls");
+		if (n <= 0) { WeaponShop(); }
+		if (oplayer.Coin < n * w0001.cost) {
+			cout << "余额不足！！" << endl;
+			WeaponShop();
+		}
+		else {
+			oplayer.Coin = oplayer.Coin - n * w0001.cost;
+			w0001.n = w0001.n + n;
+			cout << "您已购买 " << n << " 个 "<<w0001.NAME<<"！\n" <<
+				"您的余额为" << oplayer.Coin << " 谢谢光临!" << endl;
+			WeaponShop();
+		}break;
+	case(2): {
+		Shop();
+	}
+	case(3):
+		Shop();
+	default:
+		cout << "无效输入，请重新选择！\n" << endl;
+		cin.clear();
+		cin.ignore(1024, '\n');
+		WeaponShop();
+	}
+}
 void Shop() {
 	int Shop_key_1;
 	cout << "你来到了商业街！" << endl;
-	cout << "1:道具店\n2:武器铺（未开放）\n3:防具铺（未开放）\n4:返回" << endl;
+	cout << "1:道具店\n2:武器铺\n3:防具铺（未开放）\n4:返回" << endl;
 	cin >> Shop_key_1;
 	system("cls");
 	switch (Shop_key_1) {
 	case(1):
 		PropShop();
 		break;
+	case(2):
+		WeaponShop();
 	case(4):
 		SelectMove();
 	default:
@@ -543,10 +648,11 @@ void SelectMove() {
 	cout << "2:商业街" << endl;
 	cout << "3:在旅店休息" << endl;
 	cout << "4:属性" << endl;
-	cout << "5:背包" << endl;
-	cout << "6:钱包" << endl;
-	cout << "7:保存游戏" << endl;
-	cout << "8:退出游戏" << endl;
+	cout << "5:装备" << endl;
+	cout << "6:背包" << endl;
+	cout << "7:钱包" << endl;
+	cout << "8:保存游戏" << endl;
+	cout << "9:退出游戏" << endl;
 	cin >> key;
 	system("cls");
 	switch (key) {
@@ -562,15 +668,17 @@ void SelectMove() {
 		SelectMove();
 	case(4):
 		oplayer.ShowProperty();
-	case(5):
-		ShowProp();
 	case(6):
-		oplayer.ShowCoin();
+		ShowProp();
+	case(5):
+		oplayer.ShowGear();
 	case(7):
+		oplayer.ShowCoin();
+	case(8):
 		Save();
 		Sleep(2000);
 		SelectMove();
-	case(8):
+	case(9):
 		exit(0);
 		break;
 	default:
@@ -581,16 +689,18 @@ void SelectMove() {
 	}
 }
 
-struct SaveData {//等级、经验、金币、安全点、道具1、道具2....
+struct SaveData {//保存：等级、经验、金币、安全点、道具1、道具2....
 	int Lev;
 	int Exp;
 	int Coin;
 	int Safepoint;
-	int n_p0001;
+	int n_p0001;//道具编码0001
 	int n_p0002;
+	int n_w0001;//武器编码0001
 	string serialize() const {
-		return to_string(Lev) + "," + to_string(Exp) + "," + to_string(Coin) + "," 
-			+to_string(n_p0001) + "," + to_string(n_p0002) +","+to_string(Safepoint);
+		return to_string(Lev) + "," + to_string(Exp) + "," + to_string(Coin) + ","
+			+ to_string(n_p0001) + "," + to_string(n_p0002) + "," + to_string(Safepoint)
+			+ "," + to_string(n_w0001);
 	}
 	bool deserialize(const string& data) {
 		istringstream iss(data);
@@ -619,6 +729,8 @@ struct SaveData {//等级、经验、金币、安全点、道具1、道具2....
 		n_p0002 = values[4];
 		shpp.n = n_p0002;
 		safepoint.location = static_cast<Location>(values[5]);
+		n_w0001 = values[6];
+		w0001.n = n_w0001;
 		return true;
 	}
 };
@@ -645,8 +757,9 @@ bool loadGame(SaveData& saveData, const string& filename) {
 	return saveData.deserialize(line);
 }
 
-void Save() {
-	SaveData save01 = { oplayer.Lev,oplayer.Exp,oplayer.Coin,safepoint.location,chpp.n,shpp.n };
+void Save() {//保存
+	SaveData save01 = { oplayer.Lev,oplayer.Exp,oplayer.Coin,safepoint.location,
+		chpp.n,shpp.n,w0001.n };
 	saveGame(save01, "save01.txt");
 }
 void LoadGame() {
