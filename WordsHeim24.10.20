@@ -113,10 +113,11 @@ public:
 	void setProperty() {//继续游戏，属性由等级赋值
 		ATK = 2 + (Lev - 1) * 1;
 		HPmax = 10 + (Lev - 1) * 2;
+		ExpMax = 5 + 5 * Lev;
 	}
 	void ShowCoin() {
 		int key;
-		cout << "您的余额为" << oplayer.Coin << endl;
+		cout << "您的余额为 " << oplayer.Coin << endl;
 		cout << "输入1以返回" << endl;
 		cin >> key;
 		while (key != 1) {
@@ -173,8 +174,15 @@ public:
 		case(0):
 			ShowGear();
 		case(1):
-			GearWeapon(w0001);
-			ShowGear();
+			if (w0001.n == 0) {
+				cout << "装备失败！" << endl;
+				ShowGear();
+			}
+			else{
+				cout << "装备成功！" << endl;
+				GearWeapon(w0001);
+				ShowGear();
+			}
 		default:
 			cout << "无效输入，请重新选择！" << endl;
 			cin.clear();
