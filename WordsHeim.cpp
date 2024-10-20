@@ -1,11 +1,15 @@
 #include <iostream>
-#include<graphics.h>
 #include<string>
 #include<fstream>
 #include<sstream>
 #include <vector>
 #include <map>
 #include<random>
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 using namespace std;
 void SelectMove();
 void SelectMove_Wild();
@@ -13,7 +17,7 @@ void Shop();
 void LoadGame();
 void Save();
 enum Location {//地点：定义
-	克里斯镇, 克里斯镇北郊, 克里斯镇东郊
+	ChrisTown, ChrisTownNorth, ChrisTownEast
 };
 struct LOC {
 	Location location;
@@ -26,7 +30,6 @@ struct LOC {
 	}
 };
 LOC lplayer,safepoint;
-map<Location, vector<Location>>;
 std::string locationName(Location loc);
 void ShowLocation(LOC& loc);
 Location currentLocation;
@@ -79,7 +82,7 @@ public:
 	}
 	void ShowCoin() {
 		int key;
-		cout << "您的余额为" << oplayer.Coin << endl;
+		cout << "您的余额为" << Coin << endl;
 		cout << "输入1以返回" << endl;
 		cin >> key;
 		while (key != 1) {
@@ -93,11 +96,11 @@ public:
 	}
 	void ShowProperty() {
 		int key;
-		cout << "您的等级为<" << oplayer.Lev <<">" << endl;
-		cout << "HP:" << oplayer.HP << "/"<<oplayer.HPmax<<endl;
-		cout << "DEF:" << oplayer.DEF << endl;
-		cout << "ATK:" << oplayer.ATK << endl;
-		cout << "Exp:" << oplayer.Exp << "/" << oplayer.ExpMax << endl;
+		cout << "您的等级为<" << Lev <<">" << endl;
+		cout << "HP:" << HP << "/"<<HPmax<<endl;
+		cout << "DEF:" << DEF << endl;
+		cout << "ATK:" << ATK << endl;
+		cout << "Exp:" << Exp << "/" << ExpMax << endl;
 		cout << "输入1以返回" << endl;
 		cin >> key;
 		while (key != 1) {
@@ -205,7 +208,7 @@ void startGame() {
 		cout << "你的等级为<1>" << endl;
 		oplayer.HP = oplayer.HPmax;
 		Sleep(2000);
-		lplayer.setLocation(克里斯镇);
+		lplayer.setLocation(ChrisTown);
 		Sleep(2000);
 		break;
 	default:
@@ -217,17 +220,17 @@ void startGame() {
 }
 
 map<Location, vector<Location>> locationConnections = {//地点：关系
-	{克里斯镇,{克里斯镇北郊,克里斯镇东郊}},
-	{克里斯镇北郊,{克里斯镇}},
-	{克里斯镇东郊,{克里斯镇}},
+	{ChrisTown,{ChrisTownNorth, ChrisTownEast}},
+	{ChrisTownNorth,{ChrisTown}},
+	{ChrisTownEast,{ChrisTown}},
 };
 string locationName(Location loc) {//地点：枚举数字转字符串
 	switch (loc) {
-	case 克里斯镇:
+	case ChrisTown:
 		return "克里斯镇";
-	case 克里斯镇北郊:
+	case ChrisTownNorth:
 		return "克里斯镇北郊";
-	case 克里斯镇东郊:
+	case ChrisTownEast:
 		return "克里斯镇东郊";
 		// ...
 	default:
@@ -385,7 +388,7 @@ void Move(LOC& mLOC) {
 		mLOC.setLocation(connectedLocations[key - 1]);
 		cout << "从地点 " << locationName(currentLocation) << " 移动到地点 " 
 			<< locationName(mLOC.getLocation()) << endl;
-		if (mLOC.getLocation() != 克里斯镇) {//地点：安全点
+		if (mLOC.getLocation() != ChrisTown) {//地点：安全点
 			SelectMove_Wild();
 		}
 		else { SelectMove(); }
