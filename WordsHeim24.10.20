@@ -6,6 +6,8 @@
 #include <vector>
 #include <map>
 #include<random>
+#include <print>
+#include <iomanip>
 using namespace std;
 void SelectMove();
 void SelectMove_Wild();
@@ -44,10 +46,26 @@ public:
 		n = sn;
 		cost = sc;
 	}
+	void ShowAvailWeapon()const {
+		cout << NAME << endl;
+	}
 }w0001;
 
 void SetWeapon() {//武器：设置
 	w0001.setWeapon("克里斯学徒的试做铜剑", 2, 15, 0, 12);
+}
+void AvailWeapon(){//武器：可用
+	vector<Prop_Weapon> weapon = {
+		w0001
+	};
+	vector<Prop_Weapon> filterWeapon;
+	std::copy_if(weapon.begin(), weapon.end(), std::back_inserter(filterWeapon),
+		[](const Prop_Weapon& w) { return w.n >= 1; });
+	int i = 1;
+	for (const auto& weapon : filterWeapon) {
+		cout << i++ << ": ";
+		weapon.ShowAvailWeapon();
+	}
 }
 
 class player {
@@ -70,7 +88,7 @@ public:
 			ExpMax = 5 + 5 * (Lev + LevelUp_n);
 		}
 		if (LevelUp_n > 0) {
-			cout << "恭喜！您的等级提升了<" << LevelUp_n << ">级！" << endl;
+			cout << "恭喜！您的等级提升了<" << LevelUp_n << ">级！\n" << endl;
 		}
 		Lev = Lev + LevelUp_n;
 		setProperty();
@@ -115,11 +133,14 @@ public:
 	}
 	void ShowGear() {
 		int key,gkey;
+		cout << "============================" << endl;
 		cout << "1:首: " << endl;
 		cout << "2:身: " << endl;
 		cout << "3:手: " << endl;
 		cout << "4:足: " << endl;
-		cout << "5:手持: " << hold.NAME<<endl;
+		cout << "----------------------------" << endl;
+		cout << "5:手持: " << hold.NAME << endl;
+		cout << "============================" << endl;
 		cout << "6:返回" << endl;
 		cin >> key;
 		system("cls");
@@ -129,26 +150,31 @@ public:
 		case(3):
 		case(4):
 		case(5):
-			cout << "当前装备：" << hold.NAME << endl;
-			cout << "可装备：" << endl;
-			cout << "1: " << w0001.NAME <<" 数量 "<<w0001.n<<endl;
-			cout << "2:返回 "<< endl;
-			cin >> key;
-			system("cls");
-			switch (key) {
-			case(1):
-				GearWeapon(w0001);
-				ShowGear();
-			case(2):
-				ShowGear();
-			default:
-				cout << "无效输入，请重新选择！" << endl;
-				cin.clear();
-				cin.ignore(1024, '\n');
-				ShowGear();
-			}
+			ShowHold();
 		case(6):
 			SelectMove();
+		default:
+			cout << "无效输入，请重新选择！" << endl;
+			cin.clear();
+			cin.ignore(1024, '\n');
+			ShowGear();
+		}
+	}
+	void ShowHold() {
+		int key;
+		int i = 0;
+		cout << "当前装备：" << hold.NAME << endl;
+		cout << "可装备：" << endl;
+		AvailWeapon();
+		cout << "0: 返回" << endl;
+		cin >> key;
+		system("cls");
+		switch (key) {
+		case(0):
+			ShowGear();
+		case(1):
+			GearWeapon(w0001);
+			ShowGear();
 		default:
 			cout << "无效输入，请重新选择！" << endl;
 			cin.clear();
@@ -266,7 +292,9 @@ void PPsetProperty() {//n,Eff,Cost//
 
 void startGame() {
 	int key;
-	cout << "Welcome to WordsHeim!" << endl;
+	cout << "=========================\n"
+		<< "Welcome to WordsHeim!\n"
+		<< "-------------------------" << endl;
 	random_device rd;
 	mt19937 gen(rd());
 	oplayer.InitProperty();
@@ -275,7 +303,8 @@ void startGame() {
 	PPsetProperty();
 	SetLocation_Wild();
 	Sleep(2000);
-	cout << "1:继续游戏\n2:新的游戏\n";
+	cout << "1:继续游戏" << setw(15) << "2:新的游戏"
+		<< "\n=========================" << endl;
 	cin >> key;
 	system("cls");
 	switch (key) {
@@ -420,31 +449,32 @@ void ShowProperty_F(monster m) {
 	if (m.HP < 0) {
 		m.HP = 0;
 	}
-	Sleep(1000);
-	cout << m.NAME << " 的剩余血量：" << m.HP << endl;
-	Sleep(1000);
+	Sleep(600);
+	cout << m.NAME << " 的剩余血量：" << m.HP <<'\n' << endl;
+	Sleep(600);
 }
 void Fight(monster& m) {
 	cout << "发现了 "<<m.NAME<<" ！战斗开始！" << endl;
-	cout << "你的剩余血量：" << oplayer.HP << endl;
-	Sleep(1000);
+	cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
+	Sleep(600);
 	while (oplayer.HP > 0 && m.HP > 0) {
 		SelectMove_Fight(m);
-		Sleep(1000);
+		Sleep(600);
 		ShowProperty_F(m);
 		if(m.HP<=0){
-			cout << "毫无悬念的战斗！金币+"<<m.Coin<<"!经验值+" << m.Exp << "!" << endl;
+			cout << "毫无悬念的战斗！金币+"<<m.Coin<<"!经验值+" << m.Exp << "!\n" << endl;
 			m.HP = m.HPmax;
 			oplayer.Coin=oplayer.Coin + m.Coin;
 			oplayer.Exp = oplayer.Exp + m.Exp;
 			oplayer.LevelUp();
-			Sleep(1000);
+			Sleep(1200);
 			SelectMove_Wild();
 		}
-		cout << m.NAME<<" 攻击了 你！" ;
+		cout << m.NAME << " 攻击了 你！";
 		m.mAttack(m);
-		Sleep(1000);
+		Sleep(600);
 		ShowProperty_F(m);
+		Sleep(1200);
 	}
 	if (oplayer.HP <= 0) {
 		m.HP = m.HPmax;
@@ -639,23 +669,42 @@ void Shop() {
 	}
 }
 void SelectMove() {
-	int key = 0;
+	enum key {l,q,w,e,a,s,d,f,z,x};
+	string key2;
+	std::map<std::string, key> KeyMap = {
+	{"q", key::q},
+	{"w", key::w},
+	{"e", key::e},
+	{"a", key::a},
+	{"s", key::s},
+	{"d", key::d},
+	{"f", key::f},
+	{"z", key::z},
+	{"x", key::x},
+	};
 	ShowLocation(lplayer);
 	safepoint.setLocation(safepoint.getLocation());
+	Sleep(500);
+	cout << "\n=========================" << endl;
 	cout << "选择下一步行动吧~" << endl;
-	Sleep(1500);
-	cout << "1:移动" << endl;
-	cout << "2:商业街" << endl;
-	cout << "3:在旅店休息" << endl;
-	cout << "4:属性" << endl;
-	cout << "5:装备" << endl;
-	cout << "6:背包" << endl;
-	cout << "7:钱包" << endl;
-	cout << "8:保存游戏" << endl;
-	cout << "9:退出游戏" << endl;
-	cin >> key;
+	cout << "-------------------------" << endl;
+	Sleep(600);
+	cout << "行动：" << endl;
+	cout << left << setw(15) << "q:移动" << left << setw(15) << "w:商业街"
+		<< left << setw(15) << "\ne:在旅店休息" << endl;
+	cout << "-------------------------" << endl;
+	cout << "状态：" << endl;
+	cout << left << setw(15) << "a:属性" << left << setw(15) << "s:装备" << endl;
+	cout << left << setw(15) << "d:背包" << left << setw(15) << "f:钱包" << endl;
+	cout << "-------------------------" << endl;
+	cout << "游戏：" << endl;
+	cout << setw(15) << "z:保存游戏" << setw(15) << "x:退出游戏" << endl;
+	cout << "=========================" << endl;
+	cin >> key2;
+	auto it = KeyMap.find(key2);
+	key key1 = it->second;
 	system("cls");
-	switch (key) {
+	switch (key1) {
 	case(1):
 		Move(lplayer);
 	case(2):
@@ -663,15 +712,15 @@ void SelectMove() {
 	case(3):
 		oplayer.HP = oplayer.HPmax;
 		cout << "睡饱后你的内心充满了斗志。" << endl;
-		Sleep(4000);
+		Sleep(3000);
 		system("cls");
 		SelectMove();
 	case(4):
 		oplayer.ShowProperty();
-	case(6):
-		ShowProp();
 	case(5):
 		oplayer.ShowGear();
+	case(6):
+		ShowProp();
 	case(7):
 		oplayer.ShowCoin();
 	case(8):
