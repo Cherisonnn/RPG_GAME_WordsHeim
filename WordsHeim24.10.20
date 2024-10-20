@@ -52,8 +52,7 @@ public:
 			cout << "恭喜！您的等级提升了<" << LevelUp_n << ">级！" << endl;
 		}
 		Lev = Lev + LevelUp_n;
-		HPmax = 10 + (Lev - 1) * 2;
-		ATK = 3 + (Lev - 1) * 1;
+		setProperty();
 	}
 	void InitProperty() {//新的游戏
 		Lev = 1;
@@ -69,11 +68,11 @@ public:
 		cin >> Lev;
 		HPmax = 10+(Lev-1)*2;
 		DEF = 0;
-		ATK = 3+(Lev-1)*1;
+		ATK = 2+(Lev-1)*1;
 		Coin = 0;
 	}
 	void setProperty() {//继续游戏，属性由等级赋值
-		ATK = 3 + (Lev - 1) * 1;
+		ATK = 2 + (Lev - 1) * 1;
 		HPmax = 10 + (Lev - 1) * 2;
 	}
 	void ShowCoin() {
