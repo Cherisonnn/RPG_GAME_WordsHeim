@@ -49,14 +49,15 @@ public:
 	void ShowAvailWeapon()const {
 		cout << NAME << endl;
 	}
-}w0001;
+}w0000,w0001;//武器：初始化
 void SelectAvailWeapon(const vector<Prop_Weapon>& weapon);
-void SetWeapon() {//武器：设置
+void SetWeapon() {//武器：设置atk,耐久，数量，价格）
+	w0000.setWeapon("空手", 0, 0, 1, 0);
 	w0001.setWeapon("克里斯学徒的试做铜剑", 2, 15, 0, 12);
 }
 void AvailWeapon(){//武器：可用
 	vector<Prop_Weapon> weapon = {
-		w0001
+		w0000,w0001
 	};
 	vector<Prop_Weapon> filterWeapon;
 	std::copy_if(weapon.begin(), weapon.end(), std::back_inserter(filterWeapon),
@@ -164,8 +165,11 @@ public:
 	void ShowHold() {
 		int key;
 		int i = 0;
+		cout << "============================" << endl;
 		cout << "0: 返回" << endl;
+		cout << "----------------------------" << endl;
 		cout << "当前装备：" << hold.NAME << endl;
+		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
 		AvailWeapon();
 	}
@@ -191,7 +195,7 @@ public:
 
 void SelectAvailWeapon(const vector<Prop_Weapon>& weapon) {
 	int key;
-	cout << "选择：";
+	cout << "\n选择：";
 	cin >> key;
 	system("cls");
 	if (key == 0) {
@@ -348,6 +352,7 @@ void startGame() {
 	setMonster();
 	PPsetProperty();
 	SetLocation_Wild();
+	oplayer.GearWeapon(w0000);
 	Sleep(2000);
 	cout << "1:继续游戏" << setw(15) << "2:新的游戏"
 		<< "\n=========================" << endl;
@@ -358,14 +363,14 @@ void startGame() {
 		LoadGame();
 		oplayer.setProperty();
 		oplayer.HP = oplayer.HPmax;
-		Sleep(2000);
+		Sleep(1400);
 		break;
 	case(2):
 		cout << "你的等级为<1>" << endl;
 		oplayer.HP = oplayer.HPmax;
-		Sleep(2000);
+		Sleep(1000);
 		lplayer.setLocation(克里斯镇);
-		Sleep(2000);
+		Sleep(1000);
 		break;
 	default:
 		cout << "无效输入，请重新选择！\n" << endl;
@@ -395,7 +400,9 @@ string locationName(Location loc) {//地点：枚举数字转字符串
 }
 void ShowLocation(LOC& loc) {
 	Location currentLocation = loc.getLocation();
-	std::cout << "当前地点：" << locationName(currentLocation) << std::endl;
+	cout << "============================" << endl;
+	std::cout << "位置：" << locationName(currentLocation) << std::endl;
+	cout << "============================" << endl;
 }
 void SelectMove_Fight(monster& m) {
 	int SMF_key = 0;
@@ -505,7 +512,7 @@ void UseProp(monster& m) {
 			}
 			return;
 			break;
-			//可用药水case数为可选择数，增加药水时增加。
+			//可用药水case数为可选择数，增加药水时增加。1：增加判断语句，2：增加case数量
 		default:
 			cout << "错误输入\n" << endl;
 			return;
@@ -562,7 +569,7 @@ void Fight(monster& m) {
 }
 void Move(LOC& mLOC) {
 	Location currentLocation = mLOC.getLocation();
-	cout << "当前位置：" << locationName(currentLocation) << endl;
+	ShowLocation(lplayer);
 	const std::vector<Location>& connectedLocations = locationConnections[currentLocation];
 	cout << "可前往的地点：\n";
 	for (size_t i = 0; i < connectedLocations.size(); ++i) {
@@ -619,7 +626,7 @@ void SelectMove_Wild() {
 	ShowLocation(lplayer);
 	Sleep(1500);
 	cout << "你的下一步是！" << endl;
-	Sleep(1500);
+	Sleep(1000);
 	cout << "1:探索此区域" << endl;
 	cout << "2:移动" << endl;
 	cin >> key;
@@ -779,6 +786,11 @@ void SelectMove() {
 	cout << setw(15) << "z:保存游戏" << setw(15) << "x:退出游戏" << endl;
 	cout << "=========================" << endl;
 	cin >> key2;
+	if (key2 != "q"&& key2 != "w" &&key2 != "e" && key2 != "a" && key2 != "s" && 
+		key2 != "d" && key2 != "f" && key2 != "z" && key2 != "x" ) {
+		system("cls");
+		SelectMove();
+	}
 	auto it = KeyMap.find(key2);
 	key key1 = it->second;
 	system("cls");
