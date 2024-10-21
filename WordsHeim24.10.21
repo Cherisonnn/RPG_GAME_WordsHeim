@@ -50,7 +50,7 @@ public:
 		cout << NAME << endl;
 	}
 }w0001;
-
+void SelectAvailWeapon(const vector<Prop_Weapon>& weapon);
 void SetWeapon() {//武器：设置
 	w0001.setWeapon("克里斯学徒的试做铜剑", 2, 15, 0, 12);
 }
@@ -66,8 +66,8 @@ void AvailWeapon(){//武器：可用
 		cout << i++ << ": ";
 		weapon.ShowAvailWeapon();
 	}
+	SelectAvailWeapon(filterWeapon);
 }
-
 class player {
 public:
 	int HP;
@@ -164,31 +164,10 @@ public:
 	void ShowHold() {
 		int key;
 		int i = 0;
+		cout << "0: 返回" << endl;
 		cout << "当前装备：" << hold.NAME << endl;
 		cout << "可装备：" << endl;
 		AvailWeapon();
-		cout << "0: 返回" << endl;
-		cin >> key;
-		system("cls");
-		switch (key) {
-		case(0):
-			ShowGear();
-		case(1):
-			if (w0001.n == 0) {
-				cout << "装备失败！" << endl;
-				ShowGear();
-			}
-			else{
-				cout << "装备成功！" << endl;
-				GearWeapon(w0001);
-				ShowGear();
-			}
-		default:
-			cout << "无效输入，请重新选择！" << endl;
-			cin.clear();
-			cin.ignore(1024, '\n');
-			ShowGear();
-		}
 	}
 	void ShowProperty() {
 		int key;
@@ -209,6 +188,44 @@ public:
 		SelectMove();
 	}
 }oplayer;
+
+void SelectAvailWeapon(const vector<Prop_Weapon>& weapon) {
+	int key;
+	cout << "选择：";
+	cin >> key;
+	system("cls");
+	if (key == 0) {
+		oplayer.ShowGear();
+	}
+	if (key > 0 && key <= weapon.size()) {
+		const Prop_Weapon& selectedWeapon = weapon[key - 1];//输入对应可用武器列表项
+		switch (key) {
+		case 1:
+			oplayer.GearWeapon(selectedWeapon);
+			oplayer.ShowGear();
+		case 2:
+			oplayer.GearWeapon(selectedWeapon);
+			oplayer.ShowGear();
+		case 3:
+			oplayer.GearWeapon(selectedWeapon);
+			oplayer.ShowGear();
+		case 4:
+			oplayer.GearWeapon(selectedWeapon);
+			oplayer.ShowGear();
+		case 5:
+			oplayer.GearWeapon(selectedWeapon);
+			oplayer.ShowGear();
+		//可用武器case数为可选择数，有需要再加
+		default:
+			AvailWeapon();
+			break;
+		}
+	}
+	else {
+		std::cout << "Invalid choice!" << std::endl;
+		oplayer.ShowGear();
+	}
+}
 
 class monster {
 public:
@@ -267,20 +284,46 @@ void SetLocation_Wild() {//地点：野外探索参数设置
 }
 class Prop_Potion {
 public:
+	string NAME;
 	int n;
 	int Eff;
 	int cost;
-	void setProperty(int pn,int peff,int pcost) {
+	void setProperty(string ppn,int pn,int peff,int pcost) {
+		NAME = ppn;
 		n = pn;
 		Eff = peff;
 		cost = pcost;
+
+	}
+	void ShowAvailProp_Potion()const {
+		cout << NAME << " 数量 " << n << endl;
+	}
+	void reduce_n() {
+		--n;
 	}
 }chpp,shpp;
+void PPsetProperty() {//n,Eff,Cost//
+	chpp.setProperty("粗制生命药水", 0, 4, 5);
+	shpp.setProperty("制式生命药水", 0, 9, 10);
+}
+void AvailProp_Potion() {//道具：药水可用
+	vector<Prop_Potion> potion = {
+		chpp,shpp
+	};
+	vector<Prop_Potion> filterPotion;
+	std::copy_if(potion.begin(), potion.end(), std::back_inserter(filterPotion),
+		[](const Prop_Potion& w) { return w.n >= 1; });
+	int i = 1;
+	for (const auto& potion : filterPotion) {
+		cout << i++ << ": ";
+		potion.ShowAvailProp_Potion();
+	}
+	//SelectAvailPotion(filterPotion,m);
+}
 
 void ShowProp() {
 	int key;
-	cout << "1 粗制生命药水  数量  " << chpp.n << endl;
-	cout << "2 制式生命药水  数量  " << shpp.n << endl;
+	AvailProp_Potion();
 	cout << "输入1以返回" << endl;
 	cin >> key;
 	while (key != 1) {
@@ -291,11 +334,6 @@ void ShowProp() {
 	}
 	system("cls");
 	SelectMove();
-}
-
-void PPsetProperty() {//n,Eff,Cost//
-	chpp.setProperty(0, 4, 5);
-	shpp.setProperty(0, 9, 10);
 }
 
 void startGame() {
@@ -384,6 +422,7 @@ void SelectMove_Fight(monster& m) {
 		break;
 	case(3):
 		UseProp(m);
+		SelectMove_Fight(m);
 		break;
 	default:
 		cout << "无效输入，请重新选择！\n" << endl;
@@ -393,60 +432,89 @@ void SelectMove_Fight(monster& m) {
 	}
 }
 void UseProp(monster& m) {
-	int key;
+	vector<Prop_Potion> potion = {
+		chpp,shpp
+	};
+	vector<Prop_Potion> filterPotion;
+	std::copy_if(potion.begin(), potion.end(), std::back_inserter(filterPotion),
+		[](const Prop_Potion& w) { return w.n >= 1; });
 	cout << "你拥有：" << endl;
-	cout << "1 粗制生命药水  数量  " << chpp.n << endl;
-	cout << "2 制式生命药水  数量  " << shpp.n << endl;
-	cout << "3 返回" << endl;
+	AvailProp_Potion();
+	cout << "0 返回" << endl;
+	int key;
+	//cout << potion.size() << endl; 用于debug
+	cout << "选择：";
 	cin >> key;
 	system("cls");
-	switch (key) {
-	case(1):
-		if (chpp.n != 0) {
-			cout << "你使用了粗制生命药水!" << endl;
-			if (oplayer.HPmax - oplayer.HP < chpp.Eff) {
+	if (key == 0 ||key>filterPotion.size()|| filterPotion.size() == 0) {
+		return;
+	}
+	Prop_Potion& selectedPotion = filterPotion[key - 1];//输入对应可用药水列表项
+	//cout << selectedPotion.NAME << endl; 用于debug
+	if (key > 0 && key <= filterPotion.size()) {
+		switch (key) {
+		case 1:
+			cout << "你使用了 " << selectedPotion.NAME << " !" << endl;
+			if (oplayer.HPmax - oplayer.HP < selectedPotion.Eff) {
 				oplayer.HP = oplayer.HPmax;
-				chpp.n = chpp.n - 1;
-				cout << "你的剩余血量：" << oplayer.HP << endl;
+				if (selectedPotion.NAME == chpp.NAME) {
+					--chpp.n;
+					--selectedPotion.n;
+				}
+				if (selectedPotion.NAME == shpp.NAME) {
+					--shpp.n;
+					--selectedPotion.n;
+				}
+				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
 			}
 			else {
-				oplayer.HP = oplayer.HP + chpp.Eff;
-				chpp.n = chpp.n - 1;
-				cout << "你的剩余血量：" << oplayer.HP << endl;
+				oplayer.HP = oplayer.HP + selectedPotion.Eff;
+				if (selectedPotion.NAME == chpp.NAME) {
+					--chpp.n;
+					--selectedPotion.n;
+				}
+				if (selectedPotion.NAME == shpp.NAME) {
+					--shpp.n;
+					--selectedPotion.n;
+				}
+				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
 			}
-			UseProp(m);
-		}
-		else {
-			cout << "你没有啊！" << endl;
-			UseProp(m);
-		}break;
-	case(2):
-		if (shpp.n != 0) {
-			cout << "你使用了制式生命药水!" << endl;
-			if (oplayer.HPmax - oplayer.HP < shpp.Eff) {
+			return;
+			break;
+		case 2:
+			cout << "你使用了 " << selectedPotion.NAME << " !" << endl;
+			if (oplayer.HPmax - oplayer.HP < selectedPotion.Eff) {
 				oplayer.HP = oplayer.HPmax;
-				shpp.n = shpp.n - 1;
-				cout << "你的剩余血量：" << oplayer.HP << endl;
+				if (selectedPotion.NAME == chpp.NAME) {
+					--chpp.n;
+				}
+				if (selectedPotion.NAME == shpp.NAME) {
+					--shpp.n;
+				}
+				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
 			}
 			else {
-				oplayer.HP = oplayer.HP + shpp.Eff;
-				shpp.n = shpp.n - 1;
-				cout << "你的剩余血量：" << oplayer.HP << endl;
+				oplayer.HP = oplayer.HP + selectedPotion.Eff;
+				if (selectedPotion.NAME == chpp.NAME) {
+					--chpp.n;
+				}
+				if (selectedPotion.NAME == shpp.NAME) {
+					--shpp.n;
+				}
+				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
 			}
-			UseProp(m);
+			return;
+			break;
+			//可用药水case数为可选择数，增加药水时增加。
+		default:
+			cout << "错误输入\n" << endl;
+			return;
+			break;
 		}
-		else {
-			cout << "你没有啊！" << endl;
-			UseProp(m);
-		}break;
-	case(3):
-		SelectMove_Fight(m);
-		break;
-	default:
-		cout << "无效输入，请重新选择！\n" << endl;
-		cin.clear();
-		cin.ignore(1024, '\n');
-		UseProp(m);
+	}
+	else {
+		std::cout << "无效输入!" << std::endl;
+		return;
 	}
 }
 void ShowProperty_F(monster m) {
@@ -575,6 +643,7 @@ void PropShop() {
 	cout << "1：粗制生命药水 "<<chpp.cost<<"coin / 1\n"
 		<<"2：制式生命药水 "<<shpp.cost<<"coin / 1\n"
 		<<"3:返回" << endl;
+	cout << "输入：";
 	cin >> PropShop_key;
 	system("cls");
 	switch (PropShop_key) {
@@ -584,14 +653,14 @@ void PropShop() {
 		system("cls");
 		if (n <= 0) { PropShop(); }
 		if (oplayer.Coin < n * chpp.cost) {
-			cout << "余额不足！！" << endl;
+			cout << "余额不足！！\n" << endl;
 			PropShop();
 		}
 		else {
 			oplayer.Coin = oplayer.Coin - n * chpp.cost;
 			chpp.n = chpp.n + n;
 			cout << "您已购买 " << n << " 瓶粗制生命药水！\n" <<
-				"您的余额为" << oplayer.Coin << " 谢谢光临!" << endl;
+				"您的余额为" << oplayer.Coin << " 谢谢光临!\n" << endl;
 			PropShop();
 		}break;
 	case(2):
@@ -600,14 +669,14 @@ void PropShop() {
 		system("cls");
 		if (n <= 0) { PropShop(); }
 		if (oplayer.Coin < n * shpp.cost) {
-			cout << "余额不足！！" << endl;
+			cout << "余额不足！！\n" << endl;
 			PropShop();
 		}
 		else {
 			oplayer.Coin = oplayer.Coin - n * shpp.cost;
 			shpp.n = shpp.n + n;
 			cout << "您已购买 " << n << " 瓶制式生命药水！\n" <<
-				"您的余额为" << oplayer.Coin << " 谢谢光临!" << endl;
+				"您的余额为" << oplayer.Coin << " 谢谢光临!\n" << endl;
 			PropShop();
 		}break;
 	case(3):
@@ -624,6 +693,7 @@ void WeaponShop() {
 	cout << "请选择您要购买的商品！" << endl;
 	cout << "1：" <<w0001.NAME<<" " << w0001.cost << "coin / 1\n"
 		<< "2:返回" << endl;
+	cout << "输入：";
 	cin >> key;
 	system("cls");
 	switch (key) {
@@ -633,14 +703,14 @@ void WeaponShop() {
 		system("cls");
 		if (n <= 0) { WeaponShop(); }
 		if (oplayer.Coin < n * w0001.cost) {
-			cout << "余额不足！！" << endl;
+			cout << "余额不足！！\n" << endl;
 			WeaponShop();
 		}
 		else {
 			oplayer.Coin = oplayer.Coin - n * w0001.cost;
 			w0001.n = w0001.n + n;
 			cout << "您已购买 " << n << " 个 "<<w0001.NAME<<"！\n" <<
-				"您的余额为" << oplayer.Coin << " 谢谢光临!" << endl;
+				"您的余额为" << oplayer.Coin << " 谢谢光临!\n" << endl;
 			WeaponShop();
 		}break;
 	case(2): {
