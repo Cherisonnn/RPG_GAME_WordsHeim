@@ -15,7 +15,7 @@ void Shop();
 void LoadGame();
 void Save();
 enum Location {//地点：定义
-	克里斯镇, 克里斯镇北郊, 克里斯镇东郊
+	克里斯镇, 克里斯镇北郊, 克里斯镇东郊, 克里斯大洞窟,克里斯大洞窟深处
 };
 struct LOC {
 	Location location;
@@ -27,19 +27,65 @@ struct LOC {
 		location = loc;
 	}
 };
-LOC lplayer,safepoint;
+LOC lplayer, safepoint;
 std::string locationName(Location loc);
 void ShowLocation(LOC& loc);
 Location currentLocation;
-
+class Element {//元素
+public:
+	string NAME;
+	void setElement(string sn) {
+		NAME = sn;
+	}
+};
+Element fire, thunder, water, wind, earth, ice, strike, chop, stab;
+void SetElement() {
+	fire.setElement("火");
+	thunder.setElement("雷");
+	water.setElement("水");
+	wind.setElement("风");
+	earth.setElement("地");
+	ice.setElement("冰");
+	strike.setElement("打击");
+	chop.setElement("斩击");
+	stab.setElement("刺击");
+}
+class Skill {//技能
+public:
+	string NAME;
+	Element ele;
+	double Multiply;
+	int n;
+	int sp;
+	int spMax;
+	void setSkill(string stn, Element se,int sn, double sm, int ss) {
+		NAME = stn;
+		ele = se;
+		Multiply = sm;
+		sp = ss;
+		spMax = ss;
+		n = sn;
+	}
+	void print() const {
+		std::cout << NAME << std::endl;
+	}
+};//技能初始化
+Skill at_strike_001, at_stab_001;
+vector<Skill*>t_Skill{ &at_strike_001, &at_stab_001 };
+void SetSkill() {//技能
+	at_strike_001.setSkill("斜斩", chop,0, 1.5, 20);
+	at_stab_001.setSkill("突刺", stab,0, 1.5, 20);
+}
 class Prop_Weapon {//武器
 public:
 	string NAME;
+	string type;
 	int wATK;
 	int Durabily;
 	int n;
 	int cost;
-	void setWeapon(string sname, int sa, int sd, int sn, int sc) {
+	void setWeapon(string st,string sname, int sa, int sd, int sn, int sc) {
+		type = st;
 		NAME = sname;
 		wATK = sa;
 		Durabily = sd;
@@ -52,42 +98,43 @@ public:
 	void ShowShopWeapon()const {
 		cout << NAME << "	cost " << cost << endl;
 	}
-}w0000,w0001;//武器：初始化
-void SelectAvailWeapon(const vector<Prop_Weapon>& weapon);
-void SelectShopWeapon(const vector<Prop_Weapon>& weapon);
+}w0000, w0001;//武器：初始化
+void SelectAvailWeapon(const vector<Prop_Weapon*>& weapon);
+void SelectShopWeapon(const vector<Prop_Weapon*>& weapon);
 void SetWeapon() {//武器：设置atk,耐久，数量，价格）
-	w0000.setWeapon("空手", 0, 0, 1, 0);
-	w0001.setWeapon("克里斯学徒的试做铜剑", 2, 15, 0, 12);
+	w0000.setWeapon("无","空手", 0, 0, 1, 0);
+	w0001.setWeapon("轻型物理", "克里斯学徒的试做铜剑", 2, 15, 0, 12);
 }
-void AvailWeapon(){//武器：可用
-	vector<Prop_Weapon> weapon = {
-		w0000,w0001
-	};
-	vector<Prop_Weapon> filterWeapon;
-	std::copy_if(weapon.begin(), weapon.end(), std::back_inserter(filterWeapon),
-		[](const Prop_Weapon& w) { return w.n >= 1; });
+vector<Prop_Weapon*>t_weapon{ &w0000,&w0001 };
+void AvailWeapon(const vector<Prop_Weapon*>& za_weapon) {//武器：可用
+	vector<Prop_Weapon*> filterWeapon;
+	for(auto* fa_weapon:za_weapon){
+		if(fa_weapon->n > 0) {
+			filterWeapon.push_back(fa_weapon);
+		}
+	}
 	int i = 1;
-	for (const auto& weapon : filterWeapon) {
+	for (auto* weapon : filterWeapon) {
 		cout << i++ << ": ";
-		weapon.ShowAvailWeapon();
+		weapon->ShowAvailWeapon();
 	}
 	SelectAvailWeapon(filterWeapon);
 }
-void xAvailWeapon() {//武器：未获得
-	vector<Prop_Weapon> weapon = {
-		w0000,w0001
-	};
-	vector<Prop_Weapon> xfilterWeapon;
-	std::copy_if(weapon.begin(), weapon.end(), std::back_inserter(xfilterWeapon),
-		[](const Prop_Weapon& w) { return w.n == 0; });
+void xAvailWeapon(const vector<Prop_Weapon*>& zua_weapon) {//武器：未获得
+	vector<Prop_Weapon*> xfilterWeapon;
+	for (auto* fua_weapon : zua_weapon) {
+		if (fua_weapon->n == 0) {
+			xfilterWeapon.push_back(fua_weapon);
+		}
+	}
 	int i = 1;
 	cout << "============================" << endl;
 	cout << "0:返回" << endl;
 	cout << "----------------------------" << endl;
 	cout << "未获得武器：" << endl;
-	for (const auto& weapon : xfilterWeapon) {
+	for (auto* weapon : xfilterWeapon) {
 		cout << i++ << ": ";
-		weapon.ShowShopWeapon();
+		weapon->ShowShopWeapon();
 	}
 	SelectShopWeapon(xfilterWeapon);
 }
@@ -99,7 +146,7 @@ public:
 	int Durabily;
 	int n;
 	int cost;
-	void setArmor(int st ,string sname, int sa, int sd, int sn, int sc) {
+	void setArmor(int st, string sname, int sa, int sd, int sn, int sc) {
 		type = st;
 		NAME = sname;
 		DEF = sa;
@@ -113,81 +160,87 @@ public:
 	void ShowShopArmor()const {
 		cout << NAME << "	cost " << cost << endl;
 	}
-}arm1001, arm2001,arm3001,arm4001;//防具：初始化
-void SelectShopArmor(const vector<Prop_Armor>& armor);
-void SelectAvailArmor_head(const vector<Prop_Armor>& armor_head);
-void SelectAvailArmor_body(const vector<Prop_Armor>& armor_body);
-void SelectAvailArmor_hand(const vector<Prop_Armor>& armor_hand);
-void SelectAvailArmor_foot(const vector<Prop_Armor>& armor_foot);
+};//防具：初始化
+Prop_Armor arm1001, arm2001, arm3001, arm4001;
+vector<Prop_Armor*>t_armor{&arm1001, &arm2001, &arm3001, &arm4001};
+vector<Prop_Armor*>t_armor_head{ &arm1001 };
+vector<Prop_Armor*>t_armor_body{ &arm2001 };
+vector<Prop_Armor*>t_armor_hand{ &arm3001 };
+vector<Prop_Armor*>t_armor_foot{ &arm4001 };
+void SelectShopArmor(const vector<Prop_Armor*>& armor);
+void SelectAvailArmor_head(const vector<Prop_Armor*>& armor_head);
+void SelectAvailArmor_body(const vector<Prop_Armor*>& armor_body);
+void SelectAvailArmor_hand(const vector<Prop_Armor*>& armor_hand);
+void SelectAvailArmor_foot(const vector<Prop_Armor*>& armor_foot);
 void SetArmor() {//防具：类型（头、胸、手、足），name，防御力,耐久，数量，价格）
 	arm1001.setArmor(1, "克里斯猎户的皮革帽子", 1, 15, 0, 10);
 	arm2001.setArmor(2, "克里斯猎户的皮革外套", 1, 15, 0, 10);
 	arm3001.setArmor(3, "克里斯猎户的皮革手套", 1, 15, 0, 10);
 	arm4001.setArmor(4, "克里斯猎户的皮革长靴", 1, 15, 0, 10);
 }
-void AvailArmor_head() {//防具：head可用
-	vector<Prop_Armor> armor_head = {
-		arm1001
-	};
-	vector<Prop_Armor> filterArmor_head;
-	std::copy_if(armor_head.begin(), armor_head.end(), std::back_inserter(filterArmor_head),
-		[](const Prop_Armor& a) { return (a.n >= 1&&a.type==1); });
+void AvailArmor_head(const vector<Prop_Armor*>&armor) {//防具：head可用
+	vector<Prop_Armor*> filterArmor_head;
+	for (auto* fa_armor_head : armor) {
+		if (fa_armor_head->n > 0) {
+			filterArmor_head.push_back(fa_armor_head);
+		}
+	}
 	int i = 1;
 	for (const auto& armor : filterArmor_head) {
 		cout << i++ << ": ";
-		armor.ShowAvailArmor();
+		armor->ShowAvailArmor();
 	}
 	SelectAvailArmor_head(filterArmor_head);
 }
-void AvailArmor_body() {//防具：body可用
-	vector<Prop_Armor> armor_body = {
-		arm2001
-	};
-	vector<Prop_Armor> filterArmor_body;
-	std::copy_if(armor_body.begin(), armor_body.end(), std::back_inserter(filterArmor_body),
-		[](const Prop_Armor& b) { return (b.n >= 1 && b.type == 2); });
+void AvailArmor_body(const vector<Prop_Armor*>& armor) {//防具：body可用
+	vector<Prop_Armor*> filterArmor_body;
+	for (auto* fa_armor_body : armor) {
+		if (fa_armor_body->n > 0) {
+			filterArmor_body.push_back(fa_armor_body);
+		}
+	}
 	int i = 1;
 	for (const auto& armor : filterArmor_body) {
 		cout << i++ << ": ";
-		armor.ShowAvailArmor();
+		armor->ShowAvailArmor();
 	}
 	SelectAvailArmor_body(filterArmor_body);
 }
-void AvailArmor_hand() {//防具：hand可用
-	vector<Prop_Armor> armor_hand = {
-		arm3001
-	};
-	vector<Prop_Armor> filterArmor_hand;
-	std::copy_if(armor_hand.begin(), armor_hand.end(), std::back_inserter(filterArmor_hand),
-		[](const Prop_Armor& c) { return (c.n >= 1 && c.type == 3); });
+void AvailArmor_hand(const vector<Prop_Armor*>& armor) {//防具：hand可用
+	vector<Prop_Armor*> filterArmor_hand;
+	for (auto* fa_armor_hand : armor) {
+		if (fa_armor_hand->n > 0) {
+			filterArmor_hand.push_back(fa_armor_hand);
+		}
+	}
 	int i = 1;
 	for (const auto& armor : filterArmor_hand) {
 		cout << i++ << ": ";
-		armor.ShowAvailArmor();
+		armor->ShowAvailArmor();
 	}
 	SelectAvailArmor_hand(filterArmor_hand);
 }
-void AvailArmor_foot() {//防具：foot可用
-	vector<Prop_Armor> armor_foot = {
-		arm4001
-	};
-	vector<Prop_Armor> filterArmor_foot;
-	std::copy_if(armor_foot.begin(), armor_foot.end(), std::back_inserter(filterArmor_foot),
-		[](const Prop_Armor& d) { return (d.n >= 1 && d.type == 4); });
+void AvailArmor_foot(const vector<Prop_Armor*>& armor) {//防具：foot可用
+	vector<Prop_Armor*> filterArmor_foot;
+	for (auto* fa_armor_foot : armor) {
+		if (fa_armor_foot->n > 0) {
+			filterArmor_foot.push_back(fa_armor_foot);
+		}
+	}
 	int i = 1;
 	for (const auto& armor : filterArmor_foot) {
 		cout << i++ << ": ";
-		armor.ShowAvailArmor();
+		armor->ShowAvailArmor();
 	}
 	SelectAvailArmor_foot(filterArmor_foot);
 }
-void xAvailArmor() {//防具：未获得
-	vector<Prop_Armor> armor = {
-		arm1001,arm2001,arm3001,arm4001
-	};
-	vector<Prop_Armor> xfilterArmor;
-	std::copy_if(armor.begin(), armor.end(), std::back_inserter(xfilterArmor),
-		[](const Prop_Armor& w) { return w.n == 0; });
+void xAvailArmor(const vector<Prop_Armor*>& armor) {//防具：未获得
+	vector<Prop_Armor*> xfilterArmor;
+	for (auto* a_armor : armor) {
+		if (a_armor->n == 0) {
+			xfilterArmor.push_back(a_armor);
+		}
+	}
 	int i = 1;
 	cout << "============================" << endl;
 	cout << "0:返回" << endl;
@@ -195,7 +248,7 @@ void xAvailArmor() {//防具：未获得
 	cout << "未获得防具：" << endl;
 	for (const auto& armor : xfilterArmor) {
 		cout << i++ << ": ";
-		armor.ShowShopArmor();
+		armor->ShowShopArmor();
 	}
 	SelectShopArmor(xfilterArmor);
 }
@@ -211,7 +264,10 @@ public:
 	int ExpMax, LevelUp_n;
 	string position;
 	Prop_Weapon hold;
-	Prop_Armor head,body,hand,foot;
+	Prop_Armor head, body, hand, foot;
+	Skill skill_1, skill_2, skill_3, skill_4, skill_5, skill_6, skill_7, skill_8;
+	vector<Skill>GearedSkill{ skill_1, skill_2, skill_3, skill_4, skill_5, skill_6, skill_7, skill_8 };
+	vector<Skill>PlayerSkill;
 	void LevelUp() {
 		LevelUp_n = 0;
 		while (Exp > ExpMax) {
@@ -228,25 +284,17 @@ public:
 	void InitProperty() {//新的游戏
 		Lev = 1;
 		ExpMax = 5 + 7 * Lev;
-		HPmax = 10 + (Lev - 1) * 2;
+		HPmax = 13 + (Lev - 1) * 2;
 		DEF = 0;
 		ATK = 2 + (Lev - 1) * 1;
 		Coin = 0;
 		Exp = 0;
 	}
-	void SetLevel() {//等级修改器
-		cout << "Your Level is:";
-		cin >> Lev;
-		HPmax = 10+(Lev-1)*2;
-		DEF = 0;
-		ATK = 2+(Lev-1)*1;
-		Coin = 0;
-	}
 	void setProperty() {//继续游戏，属性由等级赋值
 		ATK = 2 + (Lev - 1) * 1;
 		DEF = head.DEF + body.DEF + hand.DEF + foot.DEF;
-		HPmax = 10 + (Lev - 1) * 2;
-		ExpMax = 5 + 5 * Lev;
+		HPmax = 13 + (Lev - 1) * 2;
+		ExpMax = 5 + 7 * Lev;
 	}
 	void ShowCoin() {
 		int key;
@@ -264,6 +312,7 @@ public:
 	}
 	void GearWeapon(Prop_Weapon w) {
 		oplayer.hold = w;
+		GetDefaultSkill();
 	}
 	void GearArmor_head(Prop_Armor a_he) {
 		oplayer.head = a_he;
@@ -278,7 +327,7 @@ public:
 		oplayer.foot = a_f;
 	}
 	void ShowGear() {
-		int key,gkey;
+		int key, gkey;
 		cout << "============================" << endl;
 		cout << "1:首: " << head.NAME << endl;
 		cout << "2:身: " << body.NAME << endl;
@@ -323,7 +372,7 @@ public:
 		cout << "当前装备：" << head.NAME << endl;
 		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
-		AvailArmor_head();
+		AvailArmor_head(t_armor_head);
 	}
 	void ShowBody() {
 		int key;
@@ -334,7 +383,7 @@ public:
 		cout << "当前装备：" << body.NAME << endl;
 		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
-		AvailArmor_body();
+		AvailArmor_body(t_armor_body);
 	}
 	void ShowHand() {
 		int key;
@@ -345,7 +394,7 @@ public:
 		cout << "当前装备：" << hand.NAME << endl;
 		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
-		AvailArmor_hand();
+		AvailArmor_hand(t_armor_hand);
 	}
 	void ShowFoot() {
 		int key;
@@ -356,7 +405,7 @@ public:
 		cout << "当前装备：" << foot.NAME << endl;
 		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
-		AvailArmor_foot();
+		AvailArmor_foot(t_armor_foot);
 	}
 	void ShowHold() {
 		int key;
@@ -367,14 +416,103 @@ public:
 		cout << "当前装备：" << hold.NAME << endl;
 		cout << "----------------------------" << endl;
 		cout << "可装备：" << endl;
-		AvailWeapon();
+		AvailWeapon(t_weapon);
+	}
+	void ShowSkill_SelectMove() {
+		ShowSkill();
+		SelectSkill();
+	}
+	void ShowSkill() {//技能：显示已装备技能
+		cout << "=====================================" << endl;
+		cout << "0: 返回	  技能		属性	sp" << endl;
+		cout << "-------------------------------------" << endl;
+		cout << setw(0) << "1：" << setw(21)  << GearedSkill[0].NAME << GearedSkill[0].ele.NAME <<"	" << GearedSkill[0].sp << "/" << GearedSkill[0].spMax << endl;
+		cout << setw(0) << "2：" << setw(21)  << GearedSkill[1].NAME << GearedSkill[1].ele.NAME <<"	" << GearedSkill[1].sp << "/" << GearedSkill[1].spMax << endl;
+		cout << setw(0) << "3：" << setw(21)  << GearedSkill[2].NAME << GearedSkill[2].ele.NAME <<"	" << GearedSkill[2].sp << "/" << GearedSkill[2].spMax << endl;
+		cout << setw(0) << "4：" << setw(21)  << GearedSkill[3].NAME << GearedSkill[3].ele.NAME <<"	" << GearedSkill[3].sp << "/" << GearedSkill[3].spMax << endl;
+		cout << setw(0) << "5：" << setw(21)  << GearedSkill[4].NAME << GearedSkill[4].ele.NAME <<"	" << GearedSkill[4].sp << "/" << GearedSkill[4].spMax << endl;
+		cout << setw(0) << "6：" << setw(21)  << GearedSkill[5].NAME << GearedSkill[5].ele.NAME <<"	" << GearedSkill[5].sp << "/" << GearedSkill[5].spMax << endl;
+		cout << setw(0) << "7：" << setw(21)  << GearedSkill[6].NAME << GearedSkill[6].ele.NAME <<"	" << GearedSkill[6].sp << "/" << GearedSkill[6].spMax << endl;
+		cout << setw(0) << "8：" << setw(21)  << GearedSkill[7].NAME << GearedSkill[7].ele.NAME <<"	" << GearedSkill[7].sp << "/" << GearedSkill[7].spMax << endl;
+		cout << "-------------------------------------" << endl;
+		cout << "选择：" << endl;
+	}
+	void SelectSkill() {//技能：选择替换技能
+		int key;
+		cin >> key;
+		system("cls");
+		switch (key) {
+		case(1):ShowAvailSkill(key); break;
+		case(2):ShowAvailSkill(key); break;
+		case(3):ShowAvailSkill(key); break;
+		case(4):ShowAvailSkill(key); break;
+		case(5):ShowAvailSkill(key); break;
+		case(6):ShowAvailSkill(key); break;
+		case(7):ShowAvailSkill(key); break;
+		case(8):ShowAvailSkill(key); break;
+		case(0):SelectMove(); break;
+		default:
+			cin.clear();
+			cin.ignore(1024, '\n');
+			ShowSkill_SelectMove();
+		}
+	}
+	void ShowAvailSkill(int key2) {//技能：显示可替换技能
+		int index;
+		int count = 1;
+		cout << "============================" << endl;
+		cout << "0: 返回	   技能" << endl;
+		cout << "----------------------------" << endl;
+		for (const auto& show : PlayerSkill) {
+			cout << count << ": ";
+			show.print();
+			count++;
+		}
+		cout << "============================" << endl;
+		cout << "选择：";
+		cin >> index;
+		system("cls");
+		if (index >= 1 && index <= static_cast<int>(PlayerSkill.size())) {
+			GearSkill(key2, index);
+			ShowSkill_SelectMove();
+		}
+		else {
+			ShowSkill_SelectMove();
+		}
+	}
+	void GearSkill(int key3, int index1) {//技能：对应技能栏装备技能
+		for (int n = 0; n < 7; n++) {
+			if (GearedSkill[n].NAME == PlayerSkill[index1 - 1].NAME) {
+				cout << "==不可重复装备技能==\n" << endl;
+				ShowSkill_SelectMove();
+			}
+		}
+		GearedSkill[key3 - 1] = PlayerSkill[index1 - 1];
+	}
+	void GetDefaultSkill() {//技能：装备得到默认技能
+		if (hold.type == "轻型物理") {
+			if(at_strike_001.n==0){ PlayerSkill.push_back(at_strike_001); at_strike_001.n++; }
+			if(at_stab_001.n==0){ PlayerSkill.push_back(at_stab_001); at_stab_001.n++; }
+		}
+	}
+	void ResetSp() {//重置技能使用次数
+		for (int n = 0; n < 7; n++) {
+			GearedSkill[n].sp = GearedSkill[n].spMax;
+		}
+	}
+	void InitAvailSkill(const vector<Skill*>&at_Skill) {//根据保存的技能是否拥有初始化玩家的技能列表
+		for (auto skill:at_Skill) {
+			if (skill->n == 1) {
+				oplayer.PlayerSkill.push_back(*skill);
+			}
+		}
 	}
 	void ShowProperty() {
 		int key;
-		cout << "您的等级为<" << oplayer.Lev <<">" << endl;
-		cout << "HP:" << oplayer.HP << "/"<<oplayer.HPmax<<endl;
+		cout << "您的等级为<" << oplayer.Lev << ">" << endl;
+		cout << "HP:" << oplayer.HP << "/" << oplayer.HPmax << endl;
 		cout << "DEF:" << oplayer.DEF << endl;
-		cout << "ATK:" << oplayer.ATK <<" + "<<oplayer.hold.wATK<< endl;
+		cout << "ATK:" << oplayer.ATK << " + " << oplayer.hold.wATK << endl;
 		cout << "Exp:" << oplayer.Exp << "/" << oplayer.ExpMax << endl;
 		cout << "0：返回" << endl;
 		cin >> key;
@@ -389,7 +527,7 @@ public:
 	}
 }oplayer;
 
-void SelectAvailWeapon(const vector<Prop_Weapon>& weapon) {
+void SelectAvailWeapon(const vector<Prop_Weapon*>& weapon) {
 	int key;
 	cout << "\n选择：";
 	cin >> key;
@@ -398,35 +536,16 @@ void SelectAvailWeapon(const vector<Prop_Weapon>& weapon) {
 		oplayer.ShowGear();
 	}
 	if (key > 0 && key <= weapon.size()) {
-		const Prop_Weapon& selectedWeapon = weapon[key - 1];//输入对应可用武器列表项
-		switch (key) {
-		case 1:
+		const Prop_Weapon& selectedWeapon = *weapon[key - 1];
 			oplayer.GearWeapon(selectedWeapon);
 			oplayer.ShowGear();
-		case 2:
-			oplayer.GearWeapon(selectedWeapon);
-			oplayer.ShowGear();
-		case 3:
-			oplayer.GearWeapon(selectedWeapon);
-			oplayer.ShowGear();
-		case 4:
-			oplayer.GearWeapon(selectedWeapon);
-			oplayer.ShowGear();
-		case 5:
-			oplayer.GearWeapon(selectedWeapon);
-			oplayer.ShowGear();
-		//可用武器case数为可选择数，有需要再加
-		default:
-			AvailWeapon();
-			break;
-		}
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
 		oplayer.ShowGear();
 	}
 }
-void SelectShopWeapon(const vector<Prop_Weapon>& weapon) {
+void SelectShopWeapon(const vector<Prop_Weapon*>& weapon) {
 	int key;
 	cout << "============================" << endl;
 	cout << "选择：";
@@ -436,34 +555,25 @@ void SelectShopWeapon(const vector<Prop_Weapon>& weapon) {
 		Shop();
 	}
 	if (key > 0 && key <= weapon.size()) {
-		const Prop_Weapon& selectedWeapon = weapon[key - 1];//输入对应可用武器列表项
-		switch (key) {
-		case 1:
-			if (selectedWeapon.NAME == w0001.NAME) {
-				if (oplayer.Coin <  selectedWeapon.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailWeapon();
-				}
-				else {
-					cout << "你获得了武器：" << selectedWeapon.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedWeapon.cost;
-					w0001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-		case 2:
-		case 3:
-		default:
-			xAvailWeapon();
-			break;
+		Prop_Weapon& selectedWeapon = *weapon[key - 1];
+		if (oplayer.Coin < selectedWeapon.cost) {
+			cout << "金币不足哦~\n" << endl;
+			xAvailWeapon(t_weapon);
+		}
+		else {
+			cout << "你获得了武器：" << selectedWeapon.NAME << endl;
+			oplayer.Coin = oplayer.Coin - selectedWeapon.cost;
+			selectedWeapon.n++;
+			cout << "你的金币：" << oplayer.Coin << endl;
+			xAvailWeapon(t_weapon);
 		}
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
-		xAvailWeapon();
+		xAvailWeapon(t_weapon);
 	}
 }
-void SelectShopArmor(const vector<Prop_Armor>& armor) {
+void SelectShopArmor(const vector<Prop_Armor*>& armor) {
 	int key;
 	cout << "============================" << endl;
 	cout << "选择：";
@@ -473,216 +583,25 @@ void SelectShopArmor(const vector<Prop_Armor>& armor) {
 		Shop();
 	}
 	if (key > 0 && key <= armor.size()) {
-		const Prop_Armor& selectedArmor = armor[key - 1];//输入对应可用武器列表项
-		switch (key) {
-		case 1:
-			if (selectedArmor.NAME == arm1001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm1001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm2001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm2001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm3001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm3001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm4001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm4001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			xAvailArmor();
-		case 2:
-			if (selectedArmor.NAME == arm1001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm1001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm2001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm2001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm3001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm3001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm4001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm4001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}break;
-		case 3:
-			if (selectedArmor.NAME == arm1001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm1001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm2001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm2001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm3001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm3001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm4001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm4001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}break;
-		case 4:
-			if (selectedArmor.NAME == arm1001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm1001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm2001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm2001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm3001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm3001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}
-			else if (selectedArmor.NAME == arm4001.NAME) {
-				if (oplayer.Coin < selectedArmor.cost) {
-					cout << "金币不足哦~\n" << endl;
-					xAvailArmor();
-				}
-				else {
-					cout << "你获得了防具：" << selectedArmor.NAME << endl;
-					oplayer.Coin = oplayer.Coin - selectedArmor.cost;
-					arm4001.n++;
-					cout << "你的金币：" << oplayer.Coin << endl;
-				}
-			}break;
-		default:
-			xAvailArmor();
-			break;
+		Prop_Armor& selectedArmor = *armor[key - 1];
+		if (oplayer.Coin < selectedArmor.cost) {
+			cout << "金币不足哦~\n" << endl;
+			xAvailArmor(t_armor);
+		}
+		else {
+			cout << "你获得了防具：" << selectedArmor.NAME << endl;
+			oplayer.Coin = oplayer.Coin - selectedArmor.cost;
+			selectedArmor.n++;
+			cout << "你的金币：" << oplayer.Coin << endl;
+			xAvailArmor(t_armor);
 		}
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
-		xAvailArmor();
+		xAvailArmor(t_armor);
 	}
 }
-void SelectAvailArmor_head(const vector<Prop_Armor>& armor) {
+void SelectAvailArmor_head(const vector<Prop_Armor*>& armor) {
 	int key;
 	cout << "\n选择：";
 	cin >> key;
@@ -691,40 +610,17 @@ void SelectAvailArmor_head(const vector<Prop_Armor>& armor) {
 		oplayer.ShowGear();
 	}
 	if (key > 0 && key <= armor.size()) {
-		const Prop_Armor& selectedArmor = armor[key - 1];//输入对应可用防具列表项
-		switch (key) {
-		case 1:
-			oplayer.GearArmor_head(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 2:
-			oplayer.GearArmor_head(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 3:
-			oplayer.GearArmor_head(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 4:
-			oplayer.GearArmor_head(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 5:
-			oplayer.GearArmor_head(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-			//可用防具case数为可选择数，有需要再加
-		default:
-			AvailArmor_head();
-			break;
-		}
+		const Prop_Armor& selectedArmor = *armor[key - 1];
+		oplayer.GearArmor_head(selectedArmor);
+		oplayer.setProperty();
+		oplayer.ShowGear();
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
 		oplayer.ShowGear();
 	}
 }
-void SelectAvailArmor_body(const vector<Prop_Armor>& armor) {
+void SelectAvailArmor_body(const vector<Prop_Armor*>& armor) {
 	int key;
 	cout << "\n选择：";
 	cin >> key;
@@ -733,40 +629,17 @@ void SelectAvailArmor_body(const vector<Prop_Armor>& armor) {
 		oplayer.ShowGear();
 	}
 	if (key > 0 && key <= armor.size()) {
-		const Prop_Armor& selectedArmor = armor[key - 1];//输入对应可用防具列表项
-		switch (key) {
-		case 1:
-			oplayer.GearArmor_body(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 2:
-			oplayer.GearArmor_body(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 3:
-			oplayer.GearArmor_body(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 4:
-			oplayer.GearArmor_body(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 5:
-			oplayer.GearArmor_body(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-			//可用防具case数为可选择数，有需要再加
-		default:
-			AvailArmor_body();
-			break;
-		}
+		const Prop_Armor& selectedArmor = *armor[key - 1];
+		oplayer.GearArmor_body(selectedArmor);
+		oplayer.setProperty();
+		oplayer.ShowGear();
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
 		oplayer.ShowGear();
 	}
 }
-void SelectAvailArmor_hand(const vector<Prop_Armor>& armor) {
+void SelectAvailArmor_hand(const vector<Prop_Armor*>& armor) {
 	int key;
 	cout << "\n选择：";
 	cin >> key;
@@ -775,40 +648,17 @@ void SelectAvailArmor_hand(const vector<Prop_Armor>& armor) {
 		oplayer.ShowGear();
 	}
 	if (key > 0 && key <= armor.size()) {
-		const Prop_Armor& selectedArmor = armor[key - 1];//输入对应可用防具列表项
-		switch (key) {
-		case 1:
-			oplayer.GearArmor_hand(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 2:
-			oplayer.GearArmor_hand(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 3:
-			oplayer.GearArmor_hand(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 4:
-			oplayer.GearArmor_hand(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 5:
-			oplayer.GearArmor_hand(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-			//可用防具case数为可选择数，有需要再加
-		default:
-			AvailArmor_hand();
-			break;
-		}
+		const Prop_Armor& selectedArmor = *armor[key - 1];
+		oplayer.GearArmor_hand(selectedArmor);
+		oplayer.setProperty();
+		oplayer.ShowGear();
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
 		oplayer.ShowGear();
 	}
 }
-void SelectAvailArmor_foot(const vector<Prop_Armor>& armor) {
+void SelectAvailArmor_foot(const vector<Prop_Armor*>& armor) {
 	int key;
 	cout << "\n选择：";
 	cin >> key;
@@ -817,33 +667,10 @@ void SelectAvailArmor_foot(const vector<Prop_Armor>& armor) {
 		oplayer.ShowGear();
 	}
 	if (key > 0 && key <= armor.size()) {
-		const Prop_Armor& selectedArmor = armor[key - 1];//输入对应可用防具列表项
-		switch (key) {
-		case 1:
-			oplayer.GearArmor_foot(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 2:
-			oplayer.GearArmor_foot(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 3:
-			oplayer.GearArmor_foot(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 4:
-			oplayer.GearArmor_foot(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-		case 5:
-			oplayer.GearArmor_foot(selectedArmor);
-			oplayer.setProperty();
-			oplayer.ShowGear();
-			//可用防具case数为可选择数，有需要再加
-		default:
-			AvailArmor_foot();
-			break;
-		}
+		const Prop_Armor& selectedArmor = *armor[key - 1];
+		oplayer.GearArmor_foot(selectedArmor);
+		oplayer.setProperty();
+		oplayer.ShowGear();
 	}
 	else {
 		std::cout << "Invalid choice!" << std::endl;
@@ -860,7 +687,7 @@ public:
 	int Exp;
 	int Coin;
 	friend player;
-	void setProperty(string mn,int mh = 0, int md = 0, int ma = 0, int me=0,int mm=0) {
+	void setProperty(string mn, int mh = 0, int md = 0, int ma = 0, int me = 0, int mm = 0) {
 		NAME = mn;
 		HP = mh;
 		DEF = md;
@@ -876,34 +703,38 @@ public:
 		}
 		else {
 			oplayer.HP = oplayer.HP - m.ATK + oplayer.DEF;
-			cout << "并造成了 "<< m.ATK - oplayer.DEF<<" 点伤害！" << endl;
+			cout << "并造成了 " << m.ATK - oplayer.DEF << " 点伤害！" << endl;
 		}
 	}
-}Slime,Goblin, Elite_Goblin,Strong_Goblin;
-void UseProp(monster& m);
-
+};
+void UseProp();
+monster Slime, Goblin, Elite_Goblin, Strong_Goblin, Capitalist_Goblin,Taer;
 void setMonster() {//HP,DEF,ATK,Exp,Coin//
 	Slime.setProperty("史莱姆", 4, 0, 2, 2, 1);
-	Goblin.setProperty("哥布林",8, 0, 4, 4, 3);
-	Elite_Goblin.setProperty("哥布林精英", 15, 2, 6, 12, 10);
-	Strong_Goblin.setProperty("沉淀哥布林", 12, 1, 5, 8, 7);
+	Goblin.setProperty("哥布林", 8, 0, 5, 4, 3);
+	Elite_Goblin.setProperty("哥布林精英", 20, 3, 7, 12, 10);
+	Strong_Goblin.setProperty("沉淀哥布林", 14, 1, 6, 8, 7);
+	Capitalist_Goblin.setProperty("哥布林资本家", 40, 1, 6, 12, 18);
+	Taer.setProperty("忒尔", 50, 6, 8, 35, 30);
 }
 
 class Location_Wild {
 public:
 	monster LWm1, LWm2, LWm3;
 	int TreasureCoin;
-	void setLocation_Wild(monster m1,monster m2,monster m3,int tc) {
+	void setLocation_Wild(monster m1, monster m2, monster m3, int tc) {
 		LWm1 = m1;
 		LWm2 = m2;
 		LWm3 = m3;
 		TreasureCoin = tc;
 	}
-}LW001,LW002;
-
+};
+Location_Wild LW001, LW002, LW003, LW004;
 void SetLocation_Wild() {//地点：野外探索参数设置
 	LW001.setLocation_Wild(Slime, Goblin, Elite_Goblin, 1);
 	LW002.setLocation_Wild(Slime, Strong_Goblin, Elite_Goblin, 2);
+	LW003.setLocation_Wild(Strong_Goblin, Elite_Goblin, Capitalist_Goblin, 4);
+	LW004.setLocation_Wild(Elite_Goblin, Capitalist_Goblin,Taer ,5);
 }
 class Prop_Potion {
 public:
@@ -911,7 +742,7 @@ public:
 	int n;
 	int Eff;
 	int cost;
-	void setProperty(string ppn,int pn,int peff,int pcost) {
+	void setProperty(string ppn, int pn, int peff, int pcost) {
 		NAME = ppn;
 		n = pn;
 		Eff = peff;
@@ -924,7 +755,7 @@ public:
 	void reduce_n() {
 		--n;
 	}
-}chpp,shpp;
+}chpp, shpp;
 void PPsetProperty() {//n,Eff,Cost//
 	chpp.setProperty("粗制生命药水", 0, 4, 5);
 	shpp.setProperty("制式生命药水", 0, 9, 10);
@@ -967,8 +798,10 @@ void startGame() {
 	random_device rd;
 	mt19937 gen(rd());
 	oplayer.InitProperty();
+	SetElement();
 	SetWeapon();
 	SetArmor();
+	SetSkill();
 	setMonster();
 	PPsetProperty();
 	SetLocation_Wild();
@@ -982,6 +815,7 @@ void startGame() {
 	case(1):
 		LoadGame();
 		oplayer.setProperty();
+		oplayer.InitAvailSkill(t_Skill);
 		oplayer.HP = oplayer.HPmax;
 		Sleep(1400);
 		break;
@@ -1003,7 +837,8 @@ void startGame() {
 map<Location, vector<Location>> locationConnections = {//地点：关系
 	{克里斯镇,{克里斯镇北郊,克里斯镇东郊}},
 	{克里斯镇北郊,{克里斯镇}},
-	{克里斯镇东郊,{克里斯镇}},
+	{克里斯镇东郊,{克里斯镇,克里斯大洞窟}},
+	{克里斯大洞窟,{克里斯镇东郊,克里斯大洞窟深处}}
 };
 string locationName(Location loc) {//地点：枚举数字转字符串
 	switch (loc) {
@@ -1013,7 +848,10 @@ string locationName(Location loc) {//地点：枚举数字转字符串
 		return "克里斯镇北郊";
 	case 克里斯镇东郊:
 		return "克里斯镇东郊";
-		// ...
+	case 克里斯大洞窟:
+		return"克里斯大洞窟";
+	case 克里斯大洞窟深处:
+		return"克里斯大洞窟深处";
 	default:
 		return "未知地点";
 	}
@@ -1024,31 +862,83 @@ void ShowLocation(LOC& loc) {
 	std::cout << "位置：" << locationName(currentLocation) << std::endl;
 	cout << "============================" << endl;
 }
+void SelectSkill_Fight(monster& m);
+void UseGearedSkill(int key2, monster& m);
+void UseSkill(monster& m);
+void SelectMove_Fight(monster& m);
+void ShowSkill_Fight(monster& m) {
+	oplayer.ShowSkill();
+	SelectSkill_Fight(m);
+}
+void SelectSkill_Fight(monster& m) {//技能：选择替换技能
+	int key;
+	cin >> key;
+	system("cls");
+	switch (key) {
+	case(1):UseGearedSkill(key, m); break;
+	case(2):UseGearedSkill(key, m); break;
+	case(3):UseGearedSkill(key, m); break;
+	case(4):UseGearedSkill(key, m); break;
+	case(5):UseGearedSkill(key, m); break;
+	case(6):UseGearedSkill(key, m); break;
+	case(7):UseGearedSkill(key, m); break;
+	case(8):UseGearedSkill(key, m); break;
+	case(0):SelectMove_Fight(m); break;
+	default:
+		cin.clear();
+		cin.ignore(1024, '\n');
+		ShowSkill_Fight(m);
+	}
+}
+void UseGearedSkill(int key2, monster& m) {
+	double damage_double;
+	damage_double = (oplayer.ATK + oplayer.hold.wATK) *oplayer.GearedSkill[key2 - 1].Multiply;
+	int damage = static_cast<int>(damage_double);
+	if (oplayer.GearedSkill[key2 - 1].sp > 0) {
+		if (damage <= m.DEF) {
+			m.HP = m.HP - 1;
+			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 1 点伤害！" << endl;
+		}
+		else {
+			m.HP = m.HP - damage + m.DEF;
+			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 " << damage - m.DEF << " 点伤害！" << endl;
+		}
+		oplayer.GearedSkill[key2 - 1].sp--;
+		cout << oplayer.GearedSkill[key2 - 1].NAME << "的剩余使用次数：" << oplayer.GearedSkill[key2 - 1].sp << endl;
+	}
+	else {
+		cout << "技能不可使用" << endl;
+		ShowSkill_Fight(m);
+	}
+}
 void SelectMove_Fight(monster& m) {
 	int SMF_key = 0;
 	cout << "选择行动：" << endl;
 	cout << "1:攻击" << endl;
-	cout << "2:逃跑" << endl;
+	cout << "2:技能" << endl;
 	cout << "3:使用道具" << endl;
+	cout << "4:逃跑" << endl;
 	cin >> SMF_key;
 	system("cls");
 	switch (SMF_key) {
 	case(1):
 		if (m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF >= m.HP) {
 			m.HP = m.HP - 1;
-			cout << "你 攻击了 "<<m.NAME<<" 并造成了 1 点伤害！" << endl;
+			cout << "你 攻击了 " << m.NAME << " 并造成了 1 点伤害！" << endl;
 		}
 		else {
 			m.HP = m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF;
-			cout << "你 攻击了 " << m.NAME << " 造成了 " << oplayer.ATK +oplayer.hold.wATK- m.DEF
+			cout << "你 攻击了 " << m.NAME << " 造成了 " << oplayer.ATK + oplayer.hold.wATK - m.DEF
 				<< " 点伤害!" << endl;
 		}break;
 	case(2):
+		UseSkill(m); break;
+	case(4):
 		cout << "逃跑成功了！" << endl;
 		SelectMove_Wild();
 		break;
 	case(3):
-		UseProp(m);
+		UseProp();
 		SelectMove_Fight(m);
 		break;
 	default:
@@ -1058,7 +948,10 @@ void SelectMove_Fight(monster& m) {
 		SelectMove_Fight(m);
 	}
 }
-void UseProp(monster& m) {
+void UseSkill(monster& m) {
+	ShowSkill_Fight(m);
+}
+void UseProp() {
 	vector<Prop_Potion> potion = {
 		chpp,shpp
 	};
@@ -1073,7 +966,7 @@ void UseProp(monster& m) {
 	cout << "选择：";
 	cin >> key;
 	system("cls");
-	if (key == 0 ||key>filterPotion.size()|| filterPotion.size() == 0) {
+	if (key == 0 || key > filterPotion.size() || filterPotion.size() == 0) {
 		return;
 	}
 	Prop_Potion& selectedPotion = filterPotion[key - 1];//输入对应可用药水列表项
@@ -1153,21 +1046,21 @@ void ShowProperty_F(monster m) {
 		m.HP = 0;
 	}
 	Sleep(600);
-	cout << m.NAME << " 的剩余血量：" << m.HP <<'\n' << endl;
+	cout << m.NAME << " 的剩余血量：" << m.HP << '\n' << endl;
 	Sleep(600);
 }
-void Fight(monster& m) {
-	cout << "发现了 "<<m.NAME<<" ！战斗开始！" << endl;
+void Fight(monster m) {
+	cout << "发现了 " << m.NAME << " ！战斗开始！" << endl;
 	cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
 	Sleep(600);
 	while (oplayer.HP > 0 && m.HP > 0) {
 		SelectMove_Fight(m);
 		Sleep(600);
 		ShowProperty_F(m);
-		if(m.HP<=0){
-			cout << "毫无悬念的战斗！金币+"<<m.Coin<<"!经验值+" << m.Exp << "!\n" << endl;
+		if (m.HP <= 0) {
+			cout << "毫无悬念的战斗！金币+" << m.Coin << "!经验值+" << m.Exp << "!\n" << endl;
 			m.HP = m.HPmax;
-			oplayer.Coin=oplayer.Coin + m.Coin;
+			oplayer.Coin = oplayer.Coin + m.Coin;
 			oplayer.Exp = oplayer.Exp + m.Exp;
 			oplayer.LevelUp();
 			Sleep(1200);
@@ -1200,7 +1093,7 @@ void Move(LOC& mLOC) {
 	system("cls");
 	if (key >= 1 && key <= static_cast<int>(connectedLocations.size())) {
 		mLOC.setLocation(connectedLocations[key - 1]);
-		cout << "从地点 " << locationName(currentLocation) << " 移动到地点 " 
+		cout << "从地点 " << locationName(currentLocation) << " 移动到地点 "
 			<< locationName(mLOC.getLocation()) << endl;
 		if (mLOC.getLocation() != 克里斯镇) {//地点：安全点
 			SelectMove_Wild();
@@ -1208,7 +1101,7 @@ void Move(LOC& mLOC) {
 		else { SelectMove(); }
 	}
 	else {
-		cout << "无效的选择，请输入有效的数字"<< endl;
+		cout << "无效的选择，请输入有效的数字" << endl;
 		cin.clear();
 		cin.ignore(1024, '\n');
 		Move(mLOC);
@@ -1217,20 +1110,20 @@ void Move(LOC& mLOC) {
 
 void FindTreasure(Location_Wild lwft) {
 	cout << "你找到了宝箱！";
-	cout << "Coin + "<<lwft.TreasureCoin<<" ！\n";
+	cout << "Coin + " << lwft.TreasureCoin << " ！\n";
 	oplayer.Coin = oplayer.Coin + lwft.TreasureCoin;
 	SelectMove_Wild();
 }
 
-void Explore(double poa,double pob,double poc,Location_Wild lw) {
-	std::random_device rd; 
-	std::mt19937 gen(rd()); 
+void Explore(double poa, double pob, double poc, Location_Wild lw) {
+	std::random_device rd;
+	std::mt19937 gen(rd());
 	std::uniform_real_distribution<> dis(0.0, 1.0);
 	double randomValue = dis(gen);
 	if (randomValue < poa) {
 		Fight(lw.LWm1);
 	}
-	else if ((poa< randomValue)&&(randomValue < pob)) {
+	else if ((poa < randomValue) && (randomValue < pob)) {
 		Fight(lw.LWm2);
 	}
 	else if ((pob < randomValue) && (randomValue < poc)) {
@@ -1253,10 +1146,12 @@ void SelectMove_Wild() {
 	system("cls");
 	switch (key) {
 	case(1)://地点：野外探索
-		if (lplayer.location == 1) { Explore(0.4, 0.75, 0.9, LW001); }
-		if (lplayer.location == 2) { Explore(0.4, 0.75, 0.9, LW002); }
+		if (lplayer.location == 克里斯镇北郊) { Explore(0.4, 0.75, 0.9, LW001); }
+		if (lplayer.location == 克里斯镇东郊) { Explore(0.4, 0.75, 0.9, LW002); }
+		if (lplayer.location == 克里斯大洞窟) { Explore(0.4, 0.75, 0.9, LW003); }
+		if (lplayer.location == 克里斯大洞窟深处) { Explore(0.5, 0.8, 0.9, LW004); }
 	case(2):
-		Move(lplayer);	
+		Move(lplayer);
 	default:
 		cout << "无效输入，请重新选择！" << endl;
 		cin.clear();
@@ -1267,9 +1162,9 @@ void SelectMove_Wild() {
 void PropShop() {
 	int PropShop_key, n;
 	cout << "请选择您要购买的商品！" << endl;
-	cout << "1：粗制生命药水 "<<chpp.cost<<"coin / 1\n"
-		<<"2：制式生命药水 "<<shpp.cost<<"coin / 1\n"
-		<<"0:返回" << endl;
+	cout << "1：粗制生命药水 " << chpp.cost << "coin / 1\n"
+		<< "2：制式生命药水 " << shpp.cost << "coin / 1\n"
+		<< "0:返回" << endl;
 	cout << "输入：";
 	cin >> PropShop_key;
 	system("cls");
@@ -1326,9 +1221,9 @@ void Shop() {
 		PropShop();
 		break;
 	case(2):
-		xAvailWeapon();
+		xAvailWeapon(t_weapon);
 	case(3):
-		xAvailArmor();
+		xAvailArmor(t_armor);
 	case(0):
 		SelectMove();
 	default:
@@ -1339,7 +1234,7 @@ void Shop() {
 	}
 }
 void SelectMove() {
-	enum key {l,q,w,e,a,s,d,f,z,x};
+	enum key { l, q, w, e, a, s, d, f,g, z, x };
 	string key2;
 	std::map<std::string, key> KeyMap = {
 	{"q", key::q},
@@ -1349,9 +1244,11 @@ void SelectMove() {
 	{"s", key::s},
 	{"d", key::d},
 	{"f", key::f},
+	{"g", key::g},
 	{"z", key::z},
 	{"x", key::x},
 	};
+	oplayer.ResetSp();
 	oplayer.LevelUp();
 	ShowLocation(lplayer);
 	safepoint.setLocation(safepoint.getLocation());
@@ -1367,13 +1264,14 @@ void SelectMove() {
 	cout << "状态：" << endl;
 	cout << left << setw(15) << "a:属性" << left << setw(15) << "s:装备" << endl;
 	cout << left << setw(15) << "d:背包" << left << setw(15) << "f:钱包" << endl;
+	cout << left << setw(15) << "g:技能" << endl;
 	cout << "-------------------------" << endl;
 	cout << "游戏：" << endl;
 	cout << setw(15) << "z:保存游戏" << setw(15) << "x:退出游戏" << endl;
 	cout << "=========================" << endl;
 	cin >> key2;
-	if (key2 != "q"&& key2 != "w" &&key2 != "e" && key2 != "a" && key2 != "s" && 
-		key2 != "d" && key2 != "f" && key2 != "z" && key2 != "x" ) {
+	if (key2 != "q" && key2 != "w" && key2 != "e" && key2 != "a" && key2 != "s" &&
+		key2 != "d" && key2 != "f" && key2 !="g"  && key2 != "z" && key2 != "x") {
 		system("cls");
 		SelectMove();
 	}
@@ -1400,10 +1298,13 @@ void SelectMove() {
 	case(7):
 		oplayer.ShowCoin();
 	case(8):
+		oplayer.ShowSkill();
+		oplayer.SelectSkill();
+	case(9):
 		Save();
 		Sleep(2000);
 		SelectMove();
-	case(9):
+	case(10):
 		exit(0);
 		break;
 	default:
@@ -1419,18 +1320,21 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 	int Exp;
 	int Coin;
 	int Safepoint;
-	int n_p0001;//道具编码0001
+	int n_p0001;//道具编码
 	int n_p0002;
-	int n_w0001;//武器编码0001
-	int n_arm1001;
+	int n_w0001;//武器编码
+	int n_arm1001;//防具编码
 	int n_arm2001;
 	int n_arm3001;
 	int n_arm4001;
+	int n_at_strike_001;
+	int n_at_stab_001;
 	string serialize() const {
 		return to_string(Lev) + "," + to_string(Exp) + "," + to_string(Coin) + ","
 			+ to_string(n_p0001) + "," + to_string(n_p0002) + "," + to_string(Safepoint)
-			+ "," + to_string(n_w0001) +","+ to_string(n_arm1001) + ","+to_string(n_arm2001)
-			+ ","+to_string(n_arm3001) + ","+to_string(n_arm4001);
+			+ "," + to_string(n_w0001) + "," + to_string(n_arm1001) + "," + to_string(n_arm2001)
+			+ "," + to_string(n_arm3001) + "," + to_string(n_arm4001) + "," + to_string(n_at_strike_001)
+			+ "," + to_string(n_at_stab_001);
 	}
 	bool deserialize(const string& data) {
 		istringstream iss(data);
@@ -1449,7 +1353,7 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 				return false;
 			}
 		}
-		values.resize(11,0);//新增内容时增加n
+		values.resize(14, 0);//新增内容时增加n
 		//values[5] = 0;		//为新内容设置默认值（后兼容）
 		oplayer.Lev = values[0];
 		oplayer.Exp = values[1];
@@ -1469,6 +1373,10 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 		arm3001.n = n_arm3001;
 		n_arm4001 = values[10];
 		arm4001.n = n_arm4001;
+		n_at_strike_001 = values[11];
+		at_strike_001.n = n_at_strike_001;
+		n_at_stab_001 = values[12];
+		at_stab_001.n = n_at_stab_001;
 		return true;
 	}
 };
@@ -1497,7 +1405,8 @@ bool loadGame(SaveData& saveData, const string& filename) {
 
 void Save() {//保存
 	SaveData save01 = { oplayer.Lev,oplayer.Exp,oplayer.Coin,safepoint.location,
-		chpp.n,shpp.n,w0001.n ,arm1001.n,arm2001.n,arm3001.n,arm4001.n};
+		chpp.n,shpp.n,w0001.n ,arm1001.n,arm2001.n,arm3001.n,arm4001.n,at_strike_001.n
+		,at_stab_001.n};
 	saveGame(save01, "save01.txt");
 }
 void LoadGame() {
