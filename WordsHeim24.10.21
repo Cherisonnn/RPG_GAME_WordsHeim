@@ -9,8 +9,19 @@
 #include <print>
 #include <iomanip>
 using namespace std;
+int FightTurn=1;
+int m_atkbf_Timer1 = 0, m_atkbf_Timer2 = 0;
+int m_atkbf_eff1 = 0, m_atkbf_eff2 = 0;
+int p_atkbf_Timer1 = 0, p_atkbf_Timer2 = 0;
+int p_atkbf_eff1 = 0, p_atkbf_eff2 = 0;
+int m_defbf_Timer1 = 0, m_defbf_Timer2 = 0;
+int m_defbf_eff1 = 0, m_defbf_eff2 = 0;
+int p_defbf_Timer1 = 0, p_defbf_Timer2 = 0;
+int p_defbf_eff1 = 0, p_defbf_eff2 = 0;
+int m_parry_Timer = 0, p_parry_Timer = 0;
 void SelectMove();
 void SelectMove_Wild();
+void UseProp();
 void Shop();
 void LoadGame();
 void Save();
@@ -38,7 +49,7 @@ public:
 		NAME = sn;
 	}
 };
-Element fire, thunder, water, wind, earth, ice, strike, chop, stab;
+Element fire, thunder, water, wind, earth, ice, strike, chop, stab, nothing;
 void SetElement() {
 	fire.setElement("火");
 	thunder.setElement("雷");
@@ -46,36 +57,51 @@ void SetElement() {
 	wind.setElement("风");
 	earth.setElement("地");
 	ice.setElement("冰");
-	strike.setElement("打击");
-	chop.setElement("斩击");
-	stab.setElement("刺击");
+	strike.setElement("打");
+	chop.setElement("斩");
+	stab.setElement("刺");
+	nothing.setElement("无");
 }
 class Skill {//技能
 public:
 	string NAME;
-	Element ele;
+	string type;
+	Element ele1;
+	Element ele2;
 	double Multiply;
 	int n;
 	int sp;
 	int spMax;
-	void setSkill(string stn, Element se,int sn, double sm, int ss) {
+	int lasttime;
+	void setSkill(string stn, string sty, Element se1, Element se2, int sn, double sm, int ss, int lt = 0) {
 		NAME = stn;
-		ele = se;
+		type = sty;
+		ele1 = se1;
+		ele2 = se2;
 		Multiply = sm;
 		sp = ss;
 		spMax = ss;
 		n = sn;
+		lasttime = lt;
 	}
 	void print() const {
 		std::cout << NAME << std::endl;
 	}
 };//技能初始化
-Skill at_strike_001, at_stab_001;
-vector<Skill*>t_Skill{ &at_strike_001, &at_stab_001 };
+Skill Sklnothing,at_chop_001, at_stab_001,at_strike_001,at_strike_002,bf_nothing_001,bf_nothing_002,bf_nothing_003,at_chop_002;
+vector<Skill*>t_Skill{ &at_chop_001, &at_stab_001,&at_strike_001 ,&at_strike_002,&bf_nothing_001 ,&bf_nothing_002,&bf_nothing_003,&at_chop_002 };
 void SetSkill() {//技能
-	at_strike_001.setSkill("斜斩", chop,0, 1.5, 20);
-	at_stab_001.setSkill("突刺", stab,0, 1.5, 20);
+	Sklnothing.setSkill("无","无", nothing, nothing, 0, 0, 0);
+	at_chop_001.setSkill("斜斩", "攻击", chop,nothing,0, 1.5, 20);
+	at_stab_001.setSkill("突刺", "攻击", stab,nothing,0, 1.5, 20);
+	at_strike_001.setSkill("冲撞", "攻击", strike,nothing, 0, 1, 20);
+	at_strike_002.setSkill("普通一拳", "攻击", strike, nothing, 0, 1.3, 20);
+	bf_nothing_001.setSkill("沉淀", "增益atk", nothing, nothing, 0, 2, 15, 5);
+	bf_nothing_002.setSkill("金钱就是力量", "特殊", nothing, nothing, 0, 3, 10, 5);
+	bf_nothing_003.setSkill("盾之招架", "招架", strike, chop, 0, 0.5, 8, 2);
+	at_chop_002.setSkill("忒尔的大上段斩", "攻击", chop, nothing, 0, 1.8, 15);
 }
+Skill* m_Former_Skill = &Sklnothing;
 class Prop_Weapon {//武器
 public:
 	string NAME;
@@ -84,8 +110,10 @@ public:
 	int Durabily;
 	int n;
 	int cost;
-	void setWeapon(string st,string sname, int sa, int sd, int sn, int sc) {
+	int num;
+	void setWeapon(string st, int snum,string sname, int sa, int sd, int sn, int sc) {
 		type = st;
+		num = snum;
 		NAME = sname;
 		wATK = sa;
 		Durabily = sd;
@@ -98,12 +126,13 @@ public:
 	void ShowShopWeapon()const {
 		cout << NAME << "	cost " << cost << endl;
 	}
-}w0000, w0001;//武器：初始化
+};
+Prop_Weapon w0000, w0001;//武器：初始化
 void SelectAvailWeapon(const vector<Prop_Weapon*>& weapon);
 void SelectShopWeapon(const vector<Prop_Weapon*>& weapon);
 void SetWeapon() {//武器：设置atk,耐久，数量，价格）
-	w0000.setWeapon("无","空手", 0, 0, 1, 0);
-	w0001.setWeapon("轻型物理", "克里斯学徒的试做铜剑", 2, 15, 0, 12);
+	w0000.setWeapon("无",0,"空手", 0, 0, 1, 0);
+	w0001.setWeapon("轻型物理",1, "克里斯学徒的试做铜剑", 2, 15, 0, 12);
 }
 vector<Prop_Weapon*>t_weapon{ &w0000,&w0001 };
 void AvailWeapon(const vector<Prop_Weapon*>& za_weapon) {//武器：可用
@@ -146,8 +175,10 @@ public:
 	int Durabily;
 	int n;
 	int cost;
-	void setArmor(int st, string sname, int sa, int sd, int sn, int sc) {
+	int num;
+	void setArmor(int st, int snum,string sname, int sa, int sd, int sn, int sc) {
 		type = st;
+		num = snum;
 		NAME = sname;
 		DEF = sa;
 		Durabily = sd;
@@ -173,10 +204,10 @@ void SelectAvailArmor_body(const vector<Prop_Armor*>& armor_body);
 void SelectAvailArmor_hand(const vector<Prop_Armor*>& armor_hand);
 void SelectAvailArmor_foot(const vector<Prop_Armor*>& armor_foot);
 void SetArmor() {//防具：类型（头、胸、手、足），name，防御力,耐久，数量，价格）
-	arm1001.setArmor(1, "克里斯猎户的皮革帽子", 1, 15, 0, 10);
-	arm2001.setArmor(2, "克里斯猎户的皮革外套", 1, 15, 0, 10);
-	arm3001.setArmor(3, "克里斯猎户的皮革手套", 1, 15, 0, 10);
-	arm4001.setArmor(4, "克里斯猎户的皮革长靴", 1, 15, 0, 10);
+	arm1001.setArmor(1, 1001,"克里斯猎户的皮革帽子", 1, 15, 0, 10);
+	arm2001.setArmor(2, 2001,"克里斯猎户的皮革外套", 1, 15, 0, 10);
+	arm3001.setArmor(3, 3001,"克里斯猎户的皮革手套", 1, 15, 0, 10);
+	arm4001.setArmor(4, 4001,"克里斯猎户的皮革长靴", 1, 15, 0, 10);
 }
 void AvailArmor_head(const vector<Prop_Armor*>&armor) {//防具：head可用
 	vector<Prop_Armor*> filterArmor_head;
@@ -257,14 +288,21 @@ public:
 	int HP;
 	int HPmax;
 	int DEF;
+	int insDEF;
 	int ATK;
+	int insATK;
 	int Coin;
 	int Lev;
 	int Exp;
 	int ExpMax, LevelUp_n;
+	double nothing_resist;
+	double strike_resist = 0, stab_resist = 0, chop_resist = 0;
+	double fire_resist = 0, thunder_resist = 0, earth_resist = 0, wind_resist = 0, water_resist = 0, ice_resist = 0;
 	string position;
 	Prop_Weapon hold;
+	int hold_num = 0;
 	Prop_Armor head, body, hand, foot;
+	int head_num=0, body_num=0, hand_num=0, foot_num=0;
 	Skill skill_1, skill_2, skill_3, skill_4, skill_5, skill_6, skill_7, skill_8;
 	vector<Skill>GearedSkill{ skill_1, skill_2, skill_3, skill_4, skill_5, skill_6, skill_7, skill_8 };
 	vector<Skill>PlayerSkill;
@@ -311,20 +349,25 @@ public:
 		SelectMove();
 	}
 	void GearWeapon(Prop_Weapon w) {
-		oplayer.hold = w;
+		hold = w;
+		hold_num = w.num;
 		GetDefaultSkill();
 	}
 	void GearArmor_head(Prop_Armor a_he) {
-		oplayer.head = a_he;
+		head = a_he;
+		head_num = a_he.num;
 	}
 	void GearArmor_body(Prop_Armor a_b) {
-		oplayer.body = a_b;
+		body = a_b;
+		body_num = a_b.num;
 	}
 	void GearArmor_hand(Prop_Armor a_ha) {
-		oplayer.hand = a_ha;
+		hand = a_ha;
+		hand_num = a_ha.num;
 	}
 	void GearArmor_foot(Prop_Armor a_f) {
-		oplayer.foot = a_f;
+		foot = a_f;
+		foot_num = a_f.num;
 	}
 	void ShowGear() {
 		int key, gkey;
@@ -426,14 +469,14 @@ public:
 		cout << "=====================================" << endl;
 		cout << "0: 返回	  技能		属性	sp" << endl;
 		cout << "-------------------------------------" << endl;
-		cout << setw(0) << "1：" << setw(21)  << GearedSkill[0].NAME << GearedSkill[0].ele.NAME <<"	" << GearedSkill[0].sp << "/" << GearedSkill[0].spMax << endl;
-		cout << setw(0) << "2：" << setw(21)  << GearedSkill[1].NAME << GearedSkill[1].ele.NAME <<"	" << GearedSkill[1].sp << "/" << GearedSkill[1].spMax << endl;
-		cout << setw(0) << "3：" << setw(21)  << GearedSkill[2].NAME << GearedSkill[2].ele.NAME <<"	" << GearedSkill[2].sp << "/" << GearedSkill[2].spMax << endl;
-		cout << setw(0) << "4：" << setw(21)  << GearedSkill[3].NAME << GearedSkill[3].ele.NAME <<"	" << GearedSkill[3].sp << "/" << GearedSkill[3].spMax << endl;
-		cout << setw(0) << "5：" << setw(21)  << GearedSkill[4].NAME << GearedSkill[4].ele.NAME <<"	" << GearedSkill[4].sp << "/" << GearedSkill[4].spMax << endl;
-		cout << setw(0) << "6：" << setw(21)  << GearedSkill[5].NAME << GearedSkill[5].ele.NAME <<"	" << GearedSkill[5].sp << "/" << GearedSkill[5].spMax << endl;
-		cout << setw(0) << "7：" << setw(21)  << GearedSkill[6].NAME << GearedSkill[6].ele.NAME <<"	" << GearedSkill[6].sp << "/" << GearedSkill[6].spMax << endl;
-		cout << setw(0) << "8：" << setw(21)  << GearedSkill[7].NAME << GearedSkill[7].ele.NAME <<"	" << GearedSkill[7].sp << "/" << GearedSkill[7].spMax << endl;
+		cout << setw(0) << "1：" << setw(21)  << GearedSkill[0].NAME << GearedSkill[0].ele1.NAME << "/" << GearedSkill[0].ele2.NAME << "	" << GearedSkill[0].sp << "/" << GearedSkill[0].spMax << endl;
+		cout << setw(0) << "2：" << setw(21)  << GearedSkill[1].NAME << GearedSkill[1].ele1.NAME << "/" << GearedSkill[1].ele2.NAME <<"	" << GearedSkill[1].sp << "/" << GearedSkill[1].spMax << endl;
+		cout << setw(0) << "3：" << setw(21)  << GearedSkill[2].NAME << GearedSkill[2].ele1.NAME << "/" << GearedSkill[2].ele2.NAME <<"	" << GearedSkill[2].sp << "/" << GearedSkill[2].spMax << endl;
+		cout << setw(0) << "4：" << setw(21)  << GearedSkill[3].NAME << GearedSkill[3].ele1.NAME << "/" << GearedSkill[3].ele2.NAME <<"	" << GearedSkill[3].sp << "/" << GearedSkill[3].spMax << endl;
+		cout << setw(0) << "5：" << setw(21)  << GearedSkill[4].NAME << GearedSkill[4].ele1.NAME << "/" << GearedSkill[4].ele2.NAME <<"	" << GearedSkill[4].sp << "/" << GearedSkill[4].spMax << endl;
+		cout << setw(0) << "6：" << setw(21)  << GearedSkill[5].NAME << GearedSkill[5].ele1.NAME << "/" << GearedSkill[5].ele2.NAME <<"	" << GearedSkill[5].sp << "/" << GearedSkill[5].spMax << endl;
+		cout << setw(0) << "7：" << setw(21)  << GearedSkill[6].NAME << GearedSkill[6].ele1.NAME << "/" << GearedSkill[6].ele2.NAME <<"	" << GearedSkill[6].sp << "/" << GearedSkill[6].spMax << endl;
+		cout << setw(0) << "8：" << setw(21)  << GearedSkill[7].NAME << GearedSkill[7].ele1.NAME << "/" << GearedSkill[7].ele2.NAME <<"	" << GearedSkill[7].sp << "/" << GearedSkill[7].spMax << endl;
 		cout << "-------------------------------------" << endl;
 		cout << "选择：" << endl;
 	}
@@ -491,7 +534,7 @@ public:
 	}
 	void GetDefaultSkill() {//技能：装备得到默认技能
 		if (hold.type == "轻型物理") {
-			if(at_strike_001.n==0){ PlayerSkill.push_back(at_strike_001); at_strike_001.n++; }
+			if(at_chop_001.n==0){ PlayerSkill.push_back(at_chop_001); at_chop_001.n++; }
 			if(at_stab_001.n==0){ PlayerSkill.push_back(at_stab_001); at_stab_001.n++; }
 		}
 	}
@@ -565,7 +608,24 @@ void SelectShopWeapon(const vector<Prop_Weapon*>& weapon) {
 			oplayer.Coin = oplayer.Coin - selectedWeapon.cost;
 			selectedWeapon.n++;
 			cout << "你的金币：" << oplayer.Coin << endl;
-			xAvailWeapon(t_weapon);
+			cout << "是否装备 " << selectedWeapon.NAME << " ?" << endl;
+			cout << "0：返回\n" << "1：装备" << endl;
+			cin >> key;
+			system("cls");
+			if (key == 0) {
+				xAvailArmor(t_armor);
+			}
+			else if (key == 1 ) {
+				oplayer.GearWeapon(selectedWeapon);
+				cout << "装备成功！" << endl;
+				Sleep(1000);
+				system("cls");
+				xAvailWeapon(t_weapon);
+			}
+			else {
+				std::cout << "Invalid choice!" << std::endl;
+				xAvailWeapon(t_weapon);
+			}
 		}
 	}
 	else {
@@ -593,7 +653,45 @@ void SelectShopArmor(const vector<Prop_Armor*>& armor) {
 			oplayer.Coin = oplayer.Coin - selectedArmor.cost;
 			selectedArmor.n++;
 			cout << "你的金币：" << oplayer.Coin << endl;
-			xAvailArmor(t_armor);
+			cout << "是否装备 " << selectedArmor.NAME << " ?" << endl;
+			cout << "0：返回\n" << "1：装备" << endl;
+			cin >> key;
+			system("cls");
+			if (key == 0) {
+				xAvailArmor(t_armor);
+			}
+			else if (key == 1&&selectedArmor.type==1) {
+				oplayer.GearArmor_head(selectedArmor);
+				cout << "装备成功！" << endl;
+				Sleep(1000);
+				system("cls");
+				xAvailArmor(t_armor);
+			}
+			else if (key == 1 && selectedArmor.type == 2) {
+				oplayer.GearArmor_body(selectedArmor);
+				cout << "装备成功！" << endl;
+				Sleep(1000);
+				system("cls");
+				xAvailArmor(t_armor);
+			}
+			else if (key == 1 && selectedArmor.type == 3) {
+				oplayer.GearArmor_hand(selectedArmor);
+				cout << "装备成功！" << endl;
+				Sleep(1000);
+				system("cls");
+				xAvailArmor(t_armor);
+			}
+			else if (key == 1 && selectedArmor.type == 4) {
+				oplayer.GearArmor_foot(selectedArmor);
+				cout << "装备成功！" << endl;
+				Sleep(1000);
+				system("cls");
+				xAvailArmor(t_armor);
+			}
+			else {
+				std::cout << "Invalid choice!" << std::endl;
+				xAvailArmor(t_armor);
+			}
 		}
 	}
 	else {
@@ -682,40 +780,241 @@ public:
 	string NAME;
 	int HP;
 	int DEF;
+	int insDEF;
 	int ATK;
+	int insATK;
 	int HPmax;
 	int Exp;
 	int Coin;
+	double nothing_resist = 0;
+	double strike_resist = 0, stab_resist = 0, chop_resist = 0;
+	double fire_resist = 0, thunder_resist = 0, earth_resist = 0, wind_resist = 0, water_resist = 0, ice_resist = 0;
+	Element Weak1, Weak2;
+	Element Resist1, Resist2;
+	Skill* skl1,* skl2,* skl3,* skl4;
+	string Standby;
 	friend player;
-	void setProperty(string mn, int mh = 0, int md = 0, int ma = 0, int me = 0, int mm = 0) {
+	void setProperty(string mn,Element w1,Element w2,Element r1,Element r2, Skill& s1, Skill& s2, Skill& s3, Skill& s4, string sstand, int mh = 0, int md = 0, int ma = 0, int me = 0, int mm = 0) {
 		NAME = mn;
+		Weak1 = w1;
+		Weak2 = w2;
+		Resist1 = r1;
+		Resist2 = r2;
 		HP = mh;
 		DEF = md;
+		insDEF = md;
 		ATK = ma;
+		insATK = ma;
 		HPmax = mh;
 		Exp = me;
 		Coin = mm;
+		skl1 = &s1;
+		skl2 = &s2;
+		skl3 = &s3;
+		skl4 = &s4;
+		Standby = sstand;
 	}
-	void mAttack(monster m) {
-		if (oplayer.HP - m.ATK + oplayer.DEF >= oplayer.HP) {
-			oplayer.HP = oplayer.HP - 1;
-			cout << "并造成了 1 点伤害！" << endl;
+	void m_UseSkill(monster& m,Skill* skl) {
+		m_Former_Skill = skl;
+		if (skl->NAME ==	"无") {
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_real_distribution<> dis(0.0, 1.0);
+			double randomValue = dis(gen);
+			if (randomValue < 0.15) { cout << m.NAME << " " << m.Standby << endl; }
+			else {
+				cout << m.NAME << " 攻击了你 ";
+				if (m.ATK*(1-oplayer.nothing_resist) - oplayer.DEF <1) {
+					oplayer.HP = oplayer.HP - 1;
+					cout << "并造成了 1 点伤害！" << endl;
+				}
+				else {
+					oplayer.HP = oplayer.HP - m.ATK * (1 - oplayer.nothing_resist) + oplayer.DEF;
+					cout << "并造成了 " << m.ATK * (1 - oplayer.nothing_resist) - oplayer.DEF << " 点伤害！" << endl;
+				}
+			}
+			return;
 		}
-		else {
-			oplayer.HP = oplayer.HP - m.ATK + oplayer.DEF;
-			cout << "并造成了 " << m.ATK - oplayer.DEF << " 点伤害！" << endl;
+		double damage_double;
+		damage_double = m.ATK * skl->Multiply;
+		if (skl->ele1.NAME == "火") {
+			damage_double *= (1 - oplayer.fire_resist);
 		}
+		if (skl->ele1.NAME == "水") {
+			damage_double *= (1 - oplayer.water_resist);
+		}
+		if (skl->ele1.NAME == "雷") {
+			damage_double *= (1 - oplayer.thunder_resist);
+		}
+		if (skl->ele1.NAME == "风") {
+			damage_double *= (1 - oplayer.wind_resist);
+		}
+		if (skl->ele1.NAME == "地") {
+			damage_double *= (1 - oplayer.earth_resist);
+		}
+		if (skl->ele1.NAME == "冰") {
+			damage_double *= (1 - oplayer.ice_resist);
+		}
+		if (skl->ele1.NAME == "打") {
+			damage_double *= (1 - oplayer.strike_resist);
+		}
+		if (skl->ele1.NAME == "斩") {
+			damage_double *= (1 - oplayer.chop_resist);
+		}
+		if (skl->ele1.NAME == "刺") {
+			damage_double *= (1 - oplayer.stab_resist);
+		}
+		if (skl->ele2.NAME == "火") {
+			damage_double *= (1 - oplayer.fire_resist);
+		}
+		if (skl->ele2.NAME == "水") {
+			damage_double *= (1 - oplayer.water_resist);
+		}
+		if (skl->ele2.NAME == "雷") {
+			damage_double *= (1 - oplayer.thunder_resist);
+		}
+		if (skl->ele2.NAME == "风") {
+			damage_double *= (1 - oplayer.wind_resist);
+		}
+		if (skl->ele2.NAME == "地") {
+			damage_double *= (1 - oplayer.earth_resist);
+		}
+		if (skl->ele2.NAME == "冰") {
+			damage_double *= (1 - oplayer.ice_resist);
+		}
+		if (skl->ele2.NAME == "打") {
+			damage_double *= (1 - oplayer.strike_resist);
+		}
+		if (skl->ele2.NAME == "斩") {
+			damage_double *= (1 - oplayer.chop_resist);
+		}
+		if (skl->ele2.NAME == "刺") {
+			damage_double *= (1 - oplayer.stab_resist);
+		}
+		int damage = static_cast<int>(damage_double);
+		if (skl->type == "攻击") {
+			cout << m.NAME << " 发动了 " << skl->NAME << endl;
+			if (oplayer.HP - damage + oplayer.DEF >= oplayer.HP) {
+				oplayer.HP = oplayer.HP - 1;
+				cout << "并造成了 1 点伤害！" << endl;
+			}
+			else {
+				oplayer.HP = oplayer.HP - damage + oplayer.DEF;
+				cout << "并造成了 " << damage-oplayer.DEF << " 点伤害！" << endl;
+			}
+		}
+		if (skl->type == "增益atk") {
+			cout << m.NAME << " 发动了 " << skl->NAME << endl;
+			m.ATK += skl->Multiply;
+			cout << m.NAME << " 看上去更不好惹了... " << endl;
+			if (m_atkbf_Timer1 == 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->Multiply; }
+			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 == 0) { m_atkbf_Timer2 = skl->lasttime; m_atkbf_eff2 = skl->Multiply;}
+			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 != 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->Multiply;}
+		}
+		if (skl->NAME == "金钱就是力量") {
+			cout << m.NAME << " 发动了 " << skl->NAME << endl;
+			m.DEF += skl->Multiply;
+			cout << "花钱消灾，这是常识。" << endl;
+			if (m_defbf_Timer1 == 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->Multiply; }
+			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 == 0) { m_defbf_Timer2 = skl->lasttime; m_defbf_eff2 = skl->Multiply; }
+			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 != 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->Multiply; }
+		}
+		if (skl->type == "招架") {
+			cout << m.NAME << " 发动了 " << skl->NAME << endl;
+			m_parry_Timer = 2;
+			m.nothing_resist += skl->Multiply;
+			if (skl->ele1.NAME == "斩") {
+				m.chop_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "刺") {
+				m.stab_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "打") {
+				m.strike_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "火") {
+				m.fire_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "风") {
+				m.wind_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "雷") {
+				m.thunder_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "地") {
+				m.earth_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "水") {
+				m.water_resist += skl->Multiply;
+			}
+			if (skl->ele1.NAME == "冰") {
+				m.ice_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "斩") {
+				m.chop_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "刺") {
+				m.stab_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "打") {
+				m.strike_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "火") {
+				m.fire_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "风") {
+				m.wind_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "雷") {
+				m.thunder_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "地") {
+				m.earth_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "水") {
+				m.water_resist += skl->Multiply;
+			}
+			if (skl->ele2.NAME == "冰") {
+				m.ice_resist += skl->Multiply;
+			}
+			cout << m.NAME << " 严正以待！" << endl;
+		}
+	}
+	void mAttack(monster& m) {
+		m_Former_Skill = &Sklnothing;
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<> dis(0.0, 1.0);
+		double randomValue = dis(gen);
+		if (randomValue < 0.15) { cout << m.NAME << " " << m.Standby << endl; }
+		else if ((randomValue >= 0.15) && (randomValue < 0.4)) {
+			cout << m.NAME << " 攻击了你 "; 
+			if ( m.ATK*(1-oplayer.nothing_resist) - oplayer.DEF < 1) {
+				oplayer.HP = oplayer.HP - 1;
+				cout << "并造成了 1 点伤害！" << endl;
+			}
+			else {
+				oplayer.HP = oplayer.HP - m.ATK * (1 - oplayer.nothing_resist) + oplayer.DEF;
+				cout << "并造成了 " << m.ATK * (1 - oplayer.nothing_resist) - oplayer.DEF << " 点伤害！" << endl;
+			}
+		}
+		else if ((randomValue >= 0.4) && (randomValue < 0.55)) {m_UseSkill(m,skl1);}
+		else if ((randomValue >= 0.55) && (randomValue < 0.7)) {m_UseSkill(m,skl2);}
+		else if ((randomValue >= 0.7) && (randomValue < 0.85)) {m_UseSkill(m,skl3);}
+		else {m_UseSkill(m,skl4);}
 	}
 };
-void UseProp();
-monster Slime, Goblin, Elite_Goblin, Strong_Goblin, Capitalist_Goblin,Taer;
-void setMonster() {//HP,DEF,ATK,Exp,Coin//
-	Slime.setProperty("史莱姆", 4, 0, 2, 2, 1);
-	Goblin.setProperty("哥布林", 8, 0, 5, 4, 3);
-	Elite_Goblin.setProperty("哥布林精英", 20, 3, 7, 12, 10);
-	Strong_Goblin.setProperty("沉淀哥布林", 14, 1, 6, 8, 7);
-	Capitalist_Goblin.setProperty("哥布林资本家", 40, 1, 6, 12, 18);
-	Taer.setProperty("忒尔", 50, 6, 8, 35, 30);
+//怪物：初始化
+monster Slime, Goblin, Elite_Goblin, Strong_Goblin, Capitalist_Goblin, Taer, WoodenShield_Goblin, Shield_Elite_Goblin_Leader;
+void setMonster() {//怪物：设置Weak1,Weak2,Resist1,Resist2,技能1234,HP,DEF,ATK,Exp,Coin//
+	Slime.setProperty("史莱姆", strike, earth, water, fire, at_strike_001, at_strike_001, at_strike_001, at_strike_001, "咕噜噜噜...", 4, 0, 2, 2, 1);
+	Goblin.setProperty("哥布林", fire, thunder, nothing, nothing, at_stab_001, at_stab_001, at_stab_001, at_stab_001, "挠了挠头。", 8, 0, 5, 4, 3);
+	Elite_Goblin.setProperty("哥布林精英", fire, thunder, nothing, nothing, at_chop_001, at_stab_001, at_chop_001, at_stab_001, "正了正领带", 20, 3, 7, 12, 8);
+	Strong_Goblin.setProperty("沉淀哥布林", fire, thunder, nothing, nothing, at_strike_002, at_strike_002, bf_nothing_001, bf_nothing_001, "做了一个以人类视角来说也不难理解的健美姿势，但此时此刻难以理解。", 14, 1, 6, 8, 5);
+	Capitalist_Goblin.setProperty("哥布林资本家", fire, stab, nothing, nothing, bf_nothing_002, bf_nothing_002, Sklnothing, Sklnothing, "点了点钱，你有些眼馋。", 40, 1, 6, 12, 18);
+	Taer.setProperty("忒尔", fire, thunder, chop, strike, at_chop_002, bf_nothing_001, bf_nothing_003, at_stab_001, "发出哥布林少有的低沉的咆哮。", 60, 6, 9, 35, 30);
+	WoodenShield_Goblin.setProperty("小木圆盾哥布林", fire, thunder, chop, strike, at_stab_001, at_stab_001, bf_nothing_003, bf_nothing_003, "敲打了两下自己的木制小圆盾。", 8, 4, 5, 6, 4);
+	Shield_Elite_Goblin_Leader.setProperty("持盾精英哥布林组长", fire, thunder, chop, strike, at_chop_001, at_stab_001, bf_nothing_001, bf_nothing_003, "发出了得意的哼哼。", 22, 6, 7, 16, 12);
 }
 
 class Location_Wild {
@@ -731,10 +1030,10 @@ public:
 };
 Location_Wild LW001, LW002, LW003, LW004;
 void SetLocation_Wild() {//地点：野外探索参数设置
-	LW001.setLocation_Wild(Slime, Goblin, Elite_Goblin, 1);
-	LW002.setLocation_Wild(Slime, Strong_Goblin, Elite_Goblin, 2);
-	LW003.setLocation_Wild(Strong_Goblin, Elite_Goblin, Capitalist_Goblin, 4);
-	LW004.setLocation_Wild(Elite_Goblin, Capitalist_Goblin,Taer ,5);
+	LW001.setLocation_Wild(Slime, Goblin, Slime, 1);
+	LW002.setLocation_Wild(WoodenShield_Goblin, Strong_Goblin, Slime, 2);
+	LW003.setLocation_Wild(WoodenShield_Goblin, Elite_Goblin, Capitalist_Goblin, 4);
+	LW004.setLocation_Wild(Elite_Goblin,Shield_Elite_Goblin_Leader, Taer,5);
 }
 class Prop_Potion {
 public:
@@ -755,26 +1054,34 @@ public:
 	void reduce_n() {
 		--n;
 	}
-}chpp, shpp;
+	void ShowShopAvailProp_Potion()const {
+		cout << NAME << " 数量 " << n << "	cost"<<cost << endl;
+	}
+};
+Prop_Potion chpp,shpp ;
+vector<Prop_Potion> potion = {
+	chpp,shpp
+};
+vector<Prop_Potion*>addr_potion = {
+	&chpp,&shpp
+};
 void PPsetProperty() {//n,Eff,Cost//
 	chpp.setProperty("粗制生命药水", 0, 4, 5);
 	shpp.setProperty("制式生命药水", 0, 9, 10);
 }
 void AvailProp_Potion() {//道具：药水可用
-	vector<Prop_Potion> potion = {
-		chpp,shpp
-	};
-	vector<Prop_Potion> filterPotion;
-	std::copy_if(potion.begin(), potion.end(), std::back_inserter(filterPotion),
-		[](const Prop_Potion& w) { return w.n >= 1; });
-	int i = 1;
-	for (const auto& potion : filterPotion) {
-		cout << i++ << ": ";
-		potion.ShowAvailProp_Potion();
+	vector<Prop_Potion*> filterPotion;
+	for (auto* a_addr_potion : addr_potion) {
+		if (a_addr_potion->n > 0) {
+			filterPotion.push_back(a_addr_potion);
+		}
 	}
-	//SelectAvailPotion(filterPotion,m);
+	int i = 1;
+	for (const auto& apotion:filterPotion) {
+		cout << i++ << ": ";
+		apotion->ShowAvailProp_Potion();
+	}
 }
-
 void ShowProp() {
 	int key;
 	AvailProp_Potion();
@@ -838,7 +1145,8 @@ map<Location, vector<Location>> locationConnections = {//地点：关系
 	{克里斯镇,{克里斯镇北郊,克里斯镇东郊}},
 	{克里斯镇北郊,{克里斯镇}},
 	{克里斯镇东郊,{克里斯镇,克里斯大洞窟}},
-	{克里斯大洞窟,{克里斯镇东郊,克里斯大洞窟深处}}
+	{克里斯大洞窟,{克里斯镇东郊,克里斯大洞窟深处}},
+	{ 克里斯大洞窟深处,{克里斯大洞窟} }
 };
 string locationName(Location loc) {//地点：枚举数字转字符串
 	switch (loc) {
@@ -891,55 +1199,299 @@ void SelectSkill_Fight(monster& m) {//技能：选择替换技能
 	}
 }
 void UseGearedSkill(int key2, monster& m) {
-	double damage_double;
-	damage_double = (oplayer.ATK + oplayer.hold.wATK) *oplayer.GearedSkill[key2 - 1].Multiply;
-	int damage = static_cast<int>(damage_double);
-	if (oplayer.GearedSkill[key2 - 1].sp > 0) {
-		if (damage <= m.DEF) {
-			m.HP = m.HP - 1;
-			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 1 点伤害！" << endl;
+	if (oplayer.GearedSkill[key2-1].type=="攻击"){
+		double damage_double;
+		damage_double = (oplayer.ATK + oplayer.hold.wATK) *oplayer.GearedSkill[key2 - 1].Multiply;
+		if ((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak2.NAME) 
+			&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无") {
+			damage_double = damage_double * 1.5;
+		}
+		if ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak2.NAME)
+			&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无") {
+			damage_double = damage_double * 1.5;
+		}
+		if ((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist2.NAME)
+			&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无") {
+			damage_double = damage_double * 0.5;
+		}
+		if ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist2.NAME)
+			&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无") {
+			damage_double = damage_double * 0.5;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "火") {
+			damage_double *= (1 - m.fire_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "水") {
+			damage_double *= (1 - m.water_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "雷") {
+			damage_double *= (1 - m.thunder_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "风") {
+			damage_double *= (1 - m.wind_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "地") {
+			damage_double *= (1 - m.earth_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "冰") {
+			damage_double *= (1 - m.ice_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "打") {
+			damage_double *= (1 - m.strike_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "斩") {
+			damage_double *= (1 - m.chop_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "刺") {
+			damage_double *= (1 - m.stab_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "火") {
+			damage_double *= (1 - m.fire_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "水") {
+			damage_double *= (1 - m.water_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "雷") {
+			damage_double *= (1 - m.thunder_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "风") {
+			damage_double *= (1 - m.wind_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "地") {
+			damage_double *= (1 - m.earth_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "冰") {
+			damage_double *= (1 - m.ice_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "打") {
+			damage_double *= (1 - m.strike_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "斩") {
+			damage_double *= (1 - m.chop_resist);
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "刺") {
+			damage_double *= (1 - m.stab_resist);
+		}
+		int damage = static_cast<int>(damage_double);
+		if (oplayer.GearedSkill[key2 - 1].sp > 0) {
+			if (damage <= m.DEF) {
+				m.HP = m.HP - 1;
+				cout << "生命: < " << oplayer.HP << " >" << endl;
+				cout << m.NAME << "生命: < " << m.HP << " >" << endl;
+				cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 1 点伤害！" << endl;
+				Sleep(600);
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					|| ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "这似乎起了些作用！" << endl;
+				}
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					&& ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "正中眉心！" << endl;
+				}
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					|| ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "感觉有些吃力..." << endl;
+				}
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Resist2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					&& ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Resist2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "用这招简直是驴唇不对马嘴！" << endl;
+				}
+			}
+			else {
+				m.HP = m.HP - damage + m.DEF;
+				if (m.HP < 0) { m.HP = 0; }
+				cout << "生命: < " << oplayer.HP << " >" << endl;
+				cout << m.NAME << "生命: < " << m.HP << " >" << endl;
+				cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 " << damage - m.DEF << " 点伤害！" << endl;
+				Sleep(300);
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					|| ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "这似乎起了些作用！" << endl;
+				}
+				if (((oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele1.NAME == m.Weak2.NAME)
+					&& oplayer.GearedSkill[key2 - 1].ele1.NAME != "无")
+					&& ((oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak1.NAME || oplayer.GearedSkill[key2 - 1].ele2.NAME == m.Weak2.NAME)
+						&& oplayer.GearedSkill[key2 - 1].ele2.NAME != "无")) {
+					cout << "正中眉心！" << endl;
+				}
+			}
+		}
+	}
+	else if (oplayer.GearedSkill[key2 - 1].type == "增益atk") {
+		if (oplayer.GearedSkill[key2 - 1].sp > 0) {
+			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << endl;
+			if (p_atkbf_Timer1 == 0 || p_atkbf_Timer2 == 0) {
+				oplayer.ATK += oplayer.GearedSkill[key2 - 1].Multiply;
+			}
+			cout << " 蒸蒸日上啊！蒸蒸日上.. " << endl;
+			if (p_atkbf_Timer1 == 0) { p_atkbf_Timer1 = oplayer.GearedSkill[key2 - 1].lasttime; p_atkbf_eff1 = oplayer.GearedSkill[key2 - 1].Multiply; }
+			else if (p_atkbf_Timer1 != 0 && p_atkbf_Timer2 == 0) { p_atkbf_Timer2 = oplayer.GearedSkill[key2 - 1].lasttime; p_atkbf_eff2 = oplayer.GearedSkill[key2 - 1].Multiply; }
+			else if (p_atkbf_Timer1 != 0 && p_atkbf_Timer2 != 0) { p_atkbf_Timer1 = oplayer.GearedSkill[key2 - 1].lasttime; p_atkbf_eff1 = oplayer.GearedSkill[key2 - 1].Multiply; }
+		}
+	}
+	else if (oplayer.GearedSkill[key2 - 1].NAME == "金钱就是力量") {
+		if (oplayer.Coin >= 5) {
+			cout << m.NAME << " 发动了 " << oplayer.GearedSkill[key2 - 1].NAME << endl;
+			oplayer.DEF += oplayer.GearedSkill[key2 - 1].Multiply;
+			oplayer.Coin -= 5;
+			cout << "Coin-5：花钱消灾，这是常识。 " << endl;
+			if (p_defbf_Timer1 == 0) { p_defbf_Timer1 = oplayer.GearedSkill[key2 - 1].lasttime; p_defbf_eff1 = oplayer.GearedSkill[key2 - 1].Multiply; }
+			else if (p_defbf_Timer1 != 0 && p_defbf_Timer2 == 0) { p_defbf_Timer2 = oplayer.GearedSkill[key2 - 1].lasttime; p_defbf_eff2 = oplayer.GearedSkill[key2 - 1].Multiply; }
+			else if (p_defbf_Timer1 != 0 && p_defbf_Timer2 != 0) { p_defbf_Timer1 = oplayer.GearedSkill[key2 - 1].lasttime; p_defbf_eff1 = oplayer.GearedSkill[key2 - 1].Multiply; }
 		}
 		else {
-			m.HP = m.HP - damage + m.DEF;
-			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << " 造成了 " << damage - m.DEF << " 点伤害！" << endl;
+			cout << "可惜你还太穷...\n" << endl;
+			ShowSkill_Fight(m);
 		}
-		oplayer.GearedSkill[key2 - 1].sp--;
-		cout << oplayer.GearedSkill[key2 - 1].NAME << "的剩余使用次数：" << oplayer.GearedSkill[key2 - 1].sp << endl;
+	}
+	else if (oplayer.GearedSkill[key2 - 1].type == "招架") {
+		cout << "你发动了 " << oplayer.GearedSkill[key2 - 1].NAME << endl;
+		p_parry_Timer = 2;
+		oplayer.nothing_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "斩") {
+			oplayer.chop_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "刺") {
+			oplayer.stab_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "打") {
+			oplayer.strike_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "火") {
+			oplayer.fire_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "风") {
+			oplayer.wind_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "雷") {
+			oplayer.thunder_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "地") {
+			oplayer.earth_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "水") {
+			oplayer.water_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele1.NAME == "冰") {
+			oplayer.ice_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "斩") {
+			oplayer.chop_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "刺") {
+			oplayer.stab_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "打") {
+			oplayer.strike_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "火") {
+			oplayer.fire_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "风") {
+			oplayer.wind_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "雷") {
+			oplayer.thunder_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "地") {
+			oplayer.earth_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "水") {
+			oplayer.water_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		if (oplayer.GearedSkill[key2 - 1].ele2.NAME == "冰") {
+			oplayer.ice_resist += oplayer.GearedSkill[key2 - 1].Multiply;
+		}
+		cout << "你严正以待！" << endl;
 	}
 	else {
 		cout << "技能不可使用" << endl;
 		ShowSkill_Fight(m);
 	}
+	oplayer.GearedSkill[key2 - 1].sp--;
+	Sleep(600);
+	cout << oplayer.GearedSkill[key2 - 1].NAME << "的剩余使用次数：" << oplayer.GearedSkill[key2 - 1].sp << '\n' << endl;
+}
+void SkillAbsorb() {
+	cout << "正在尝试汲技..." << endl;
+	Sleep(1500);
+	if (m_Former_Skill->NAME == "无") {
+		cout << "汲技失败！敌人在上回合未释放技能！" << endl;
+		return;
+	}
+	if (m_Former_Skill->n == 1) {
+		cout << "汲技失败，你已习得该技能！" << endl;
+		return;
+	}
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(0.0, 1.0);
+	double randomValue = dis(gen);
+	if (randomValue <= FightTurn * 0.05) {
+		cout << "汲技成功！你已习得技能" << m_Former_Skill->NAME << endl;
+		m_Former_Skill->n = 1;
+		oplayer.PlayerSkill.push_back(*m_Former_Skill);
+		return;
+	}
+	else {
+		cout << "汲技失败，或许可以再尝试尝试。" << endl;
+		return;
+	}
 }
 void SelectMove_Fight(monster& m) {
 	int SMF_key = 0;
+	cout << "当前回合：" << FightTurn << endl;
+	cout << "生命: < " << oplayer.HP << " >"<<endl;
+	cout << m.NAME<< "生命： < " << m.HP << " >" << endl;
 	cout << "选择行动：" << endl;
 	cout << "1:攻击" << endl;
 	cout << "2:技能" << endl;
 	cout << "3:使用道具" << endl;
-	cout << "4:逃跑" << endl;
+	cout << "4:汲技" << endl;
+	cout << "5:摆个pose" << endl;
+	cout << "6:逃跑" << endl;
 	cin >> SMF_key;
 	system("cls");
 	switch (SMF_key) {
 	case(1):
-		if (m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF >= m.HP) {
+		if ((oplayer.ATK + oplayer.hold.wATK)*(1-m.nothing_resist) - m.DEF <1) {
 			m.HP = m.HP - 1;
-			cout << "你 攻击了 " << m.NAME << " 并造成了 1 点伤害！" << endl;
+			cout << "生命: < " << oplayer.HP << " >" << endl;
+			cout << m.NAME << "生命: < " << m.HP << " >" << endl;
+			cout << "你攻击了 " << m.NAME << " 并造成了 1 点伤害！\n" << endl;
 		}
 		else {
-			m.HP = m.HP - oplayer.ATK - oplayer.hold.wATK + m.DEF;
-			cout << "你 攻击了 " << m.NAME << " 造成了 " << oplayer.ATK + oplayer.hold.wATK - m.DEF
-				<< " 点伤害!" << endl;
+			m.HP = m.HP - (oplayer.ATK + oplayer.hold.wATK)*(1-m.nothing_resist) + m.DEF;
+			if (m.HP < 0) { m.HP = 0; }
+			cout << "生命: < " << oplayer.HP << " >" << endl;
+			cout << m.NAME << "生命: < " << m.HP << " >" << endl;
+			cout << "你攻击了 " << m.NAME << " 造成了 " << (oplayer.ATK + oplayer.hold.wATK)*(1-m.nothing_resist) - m.DEF
+				<< " 点伤害!\n" << endl;
 		}break;
 	case(2):
 		UseSkill(m); break;
-	case(4):
-		cout << "逃跑成功了！" << endl;
-		SelectMove_Wild();
-		break;
 	case(3):
 		UseProp();
 		SelectMove_Fight(m);
+		break;
+	case(4):
+		SkillAbsorb(); break;
+	case(5):
+		cout << "你稍加思索摆了个pose，可惜的是" << m.NAME << "并不会觉得你很可爱。" << endl;
+		break;
+	case(6):
+		cout << "逃跑成功了！" << endl;
+		SelectMove_Wild();
 		break;
 	default:
 		cout << "无效输入，请重新选择！\n" << endl;
@@ -952,129 +1504,199 @@ void UseSkill(monster& m) {
 	ShowSkill_Fight(m);
 }
 void UseProp() {
-	vector<Prop_Potion> potion = {
-		chpp,shpp
-	};
-	vector<Prop_Potion> filterPotion;
-	std::copy_if(potion.begin(), potion.end(), std::back_inserter(filterPotion),
-		[](const Prop_Potion& w) { return w.n >= 1; });
+	vector<Prop_Potion*> filterPotion;
+	for (auto* a_addr_potion : addr_potion) {
+		if (a_addr_potion->n > 0) {
+			filterPotion.push_back(a_addr_potion);
+		}
+	}
 	cout << "你拥有：" << endl;
 	AvailProp_Potion();
 	cout << "0：返回" << endl;
 	int key;
-	//cout << potion.size() << endl; 用于debug
 	cout << "选择：";
 	cin >> key;
 	system("cls");
 	if (key == 0 || key > filterPotion.size() || filterPotion.size() == 0) {
 		return;
 	}
-	Prop_Potion& selectedPotion = filterPotion[key - 1];//输入对应可用药水列表项
-	//cout << selectedPotion.NAME << endl; 用于debug
+	Prop_Potion& selectedPotion = *filterPotion[key - 1];
 	if (key > 0 && key <= filterPotion.size()) {
-		switch (key) {
-		case 1:
-			cout << "你使用了 " << selectedPotion.NAME << " !" << endl;
-			if (oplayer.HPmax - oplayer.HP < selectedPotion.Eff) {
-				oplayer.HP = oplayer.HPmax;
-				if (selectedPotion.NAME == chpp.NAME) {
-					--chpp.n;
-					--selectedPotion.n;
-				}
-				if (selectedPotion.NAME == shpp.NAME) {
-					--shpp.n;
-					--selectedPotion.n;
-				}
-				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
-			}
-			else {
-				oplayer.HP = oplayer.HP + selectedPotion.Eff;
-				if (selectedPotion.NAME == chpp.NAME) {
-					--chpp.n;
-					--selectedPotion.n;
-				}
-				if (selectedPotion.NAME == shpp.NAME) {
-					--shpp.n;
-					--selectedPotion.n;
-				}
-				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
-			}
-			return;
-			break;
-		case 2:
-			cout << "你使用了 " << selectedPotion.NAME << " !" << endl;
-			if (oplayer.HPmax - oplayer.HP < selectedPotion.Eff) {
-				oplayer.HP = oplayer.HPmax;
-				if (selectedPotion.NAME == chpp.NAME) {
-					--chpp.n;
-				}
-				if (selectedPotion.NAME == shpp.NAME) {
-					--shpp.n;
-				}
-				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
-			}
-			else {
-				oplayer.HP = oplayer.HP + selectedPotion.Eff;
-				if (selectedPotion.NAME == chpp.NAME) {
-					--chpp.n;
-				}
-				if (selectedPotion.NAME == shpp.NAME) {
-					--shpp.n;
-				}
-				cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
-			}
-			return;
-			break;
-			//可用药水case数为可选择数，增加药水时增加。1：增加判断语句，2：增加case数量
-		default:
-			cout << "错误输入\n" << endl;
-			return;
-			break;
+		cout << "你使用了 " << selectedPotion.NAME << " !" << endl;
+		selectedPotion.n--;
+		if (oplayer.HPmax - oplayer.HP < selectedPotion.Eff) {
+			oplayer.HP = oplayer.HPmax;
 		}
+		else { oplayer.HP = oplayer.HP + selectedPotion.Eff; }
+		return;
 	}
 	else {
 		std::cout << "无效输入!" << std::endl;
 		return;
 	}
 }
-void ShowProperty_F(monster m) {
+void SetHP_zero(monster& m) {
 	if (oplayer.HP < 0) {
 		oplayer.HP = 0;
 	}
-	cout << "你的剩余血量：" << oplayer.HP << endl;
 	if (m.HP < 0) {
 		m.HP = 0;
 	}
-	Sleep(600);
-	cout << m.NAME << " 的剩余血量：" << m.HP << '\n' << endl;
-	Sleep(600);
 }
 void Fight(monster m) {
-	cout << "发现了 " << m.NAME << " ！战斗开始！" << endl;
-	cout << "你的剩余血量：" << oplayer.HP << '\n' << endl;
+	cout << "发现了 " << m.NAME << " ！战斗开始！\n" << endl;
+	oplayer.insATK = oplayer.ATK;
 	Sleep(600);
 	while (oplayer.HP > 0 && m.HP > 0) {
+		if (m_atkbf_Timer1 > 0) {
+			m_atkbf_Timer1--;
+			if (m_atkbf_Timer1 == 0) {
+				m.ATK = m.ATK - m_atkbf_eff1;
+			}
+		}
+		if (m_atkbf_Timer2 > 0) {
+			m_atkbf_Timer2--;
+			if (m_atkbf_Timer2 == 0) {
+				m.ATK = m.ATK - m_atkbf_eff2;
+			}
+		}
+		if (p_atkbf_Timer1 > 0) {
+			p_atkbf_Timer1--;
+			if (p_atkbf_Timer1 == 0) {
+				oplayer.ATK = oplayer.ATK - p_atkbf_eff1;
+			}
+		}
+		if (p_atkbf_Timer2 > 0) {
+			p_atkbf_Timer2--;
+			if (p_atkbf_Timer2 == 0) {
+				oplayer.ATK = oplayer.ATK - p_atkbf_eff2;
+			}
+		}
+		if (m_defbf_Timer1 > 0) {
+			m_defbf_Timer1--;
+			if (m_defbf_Timer1 == 0) {
+				m.DEF = m.DEF - m_defbf_eff1;
+			}
+		}
+		if (m_defbf_Timer2 > 0) {
+			m_defbf_Timer2--;
+			if (m_defbf_Timer2 == 0) {
+				m.DEF = m.DEF - m_defbf_eff2;
+			}
+		}
+		if (p_defbf_Timer1 > 0) {
+			p_defbf_Timer1--;
+			if (p_defbf_Timer1 == 0) {
+				oplayer.DEF = oplayer.DEF - p_defbf_eff1;
+			}
+		}
+		if (p_defbf_Timer2 > 0) {
+			p_defbf_Timer2--;
+			if (p_defbf_Timer2 == 0) {
+				oplayer.DEF = oplayer.DEF - p_defbf_eff2;
+			}
+		}
+		if (m_parry_Timer > 0) {
+			m_parry_Timer--;
+			if (m_parry_Timer == 0) {
+				m.chop_resist = 0;
+				m.stab_resist = 0;
+				m.strike_resist = 0;
+				m.fire_resist = 0;
+				m.earth_resist = 0;
+				m.wind_resist = 0;
+				m.water_resist = 0;
+				m.thunder_resist = 0;
+				m.ice_resist = 0;
+				m.nothing_resist = 0;
+			}
+		}
+		if (p_parry_Timer > 0) {
+			p_parry_Timer--;
+			if (p_parry_Timer == 0) {
+				oplayer.chop_resist = 0;
+				oplayer.stab_resist = 0;
+				oplayer.strike_resist = 0;
+				oplayer.fire_resist = 0;
+				oplayer.earth_resist = 0;
+				oplayer.wind_resist = 0;
+				oplayer.water_resist = 0;
+				oplayer.thunder_resist = 0;
+				oplayer.ice_resist = 0;
+				oplayer.nothing_resist = 0;
+			}
+		}
 		SelectMove_Fight(m);
 		Sleep(600);
-		ShowProperty_F(m);
+		SetHP_zero(m);
 		if (m.HP <= 0) {
 			cout << "毫无悬念的战斗！金币+" << m.Coin << "!经验值+" << m.Exp << "!\n" << endl;
-			m.HP = m.HPmax;
+			m.HP = m.HPmax;m.ATK = m.insATK;m.DEF = m.insDEF;
+			oplayer.ATK = oplayer.insATK;oplayer.DEF = oplayer.insDEF;
+			FightTurn = 1;
+			m_atkbf_Timer1 = 0;m_atkbf_Timer2 = 0;p_atkbf_Timer1 = 0;p_atkbf_Timer2 = 0;
+			m_defbf_Timer1 = 0;m_defbf_Timer2 = 0;p_defbf_Timer1 = 0;p_defbf_Timer2 = 0;
+			m.chop_resist = 0;
+			m.stab_resist = 0;
+			m.strike_resist = 0;
+			m.fire_resist = 0;
+			m.earth_resist = 0;
+			m.wind_resist = 0;
+			m.water_resist = 0;
+			m.thunder_resist = 0;
+			m.ice_resist = 0;
+			m.nothing_resist = 0;
+			oplayer.chop_resist = 0;
+			oplayer.stab_resist = 0;
+			oplayer.strike_resist = 0;
+			oplayer.fire_resist = 0;
+			oplayer.earth_resist = 0;
+			oplayer.wind_resist = 0;
+			oplayer.water_resist = 0;
+			oplayer.thunder_resist = 0;
+			oplayer.ice_resist = 0;
+			oplayer.nothing_resist = 0;
 			oplayer.Coin = oplayer.Coin + m.Coin;
 			oplayer.Exp = oplayer.Exp + m.Exp;
 			oplayer.LevelUp();
 			Sleep(1200);
 			SelectMove_Wild();
 		}
-		cout << m.NAME << " 攻击了 你！";
 		m.mAttack(m);
+		cout << endl;
 		Sleep(600);
-		ShowProperty_F(m);
+		SetHP_zero(m);
 		Sleep(1200);
+		FightTurn++;
 	}
 	if (oplayer.HP <= 0) {
-		m.HP = m.HPmax;
 		cout << "犹豫就会败北！果断就会白给！" << endl;
+		FightTurn = 1;
+		m.HP = m.HPmax; m.ATK = m.insATK; m.DEF = m.insDEF;
+		oplayer.ATK = oplayer.insATK; oplayer.DEF = oplayer.insDEF;
+		FightTurn = 1;
+		m_atkbf_Timer1 = 0; m_atkbf_Timer2 = 0; p_atkbf_Timer1 = 0; p_atkbf_Timer2 = 0;
+		m_defbf_Timer1 = 0; m_defbf_Timer2 = 0; p_defbf_Timer1 = 0; p_defbf_Timer2 = 0;
+		m.chop_resist = 0;
+		m.stab_resist = 0;
+		m.strike_resist = 0;
+		m.fire_resist = 0;
+		m.earth_resist = 0;
+		m.wind_resist = 0;
+		m.water_resist = 0;
+		m.thunder_resist = 0;
+		m.ice_resist = 0;
+		m.nothing_resist = 0;
+		oplayer.chop_resist = 0;
+		oplayer.stab_resist = 0;
+		oplayer.strike_resist = 0;
+		oplayer.fire_resist = 0;
+		oplayer.earth_resist = 0;
+		oplayer.wind_resist = 0;
+		oplayer.water_resist = 0;
+		oplayer.thunder_resist = 0;
+		oplayer.ice_resist = 0;
+		oplayer.nothing_resist = 0;
 		lplayer.location = safepoint.location;
 		Sleep(2000);
 		SelectMove();
@@ -1093,7 +1715,7 @@ void Move(LOC& mLOC) {
 	system("cls");
 	if (key >= 1 && key <= static_cast<int>(connectedLocations.size())) {
 		mLOC.setLocation(connectedLocations[key - 1]);
-		cout << "从地点 " << locationName(currentLocation) << " 移动到地点 "
+		cout << "从 " << locationName(currentLocation) << " 移动到 "
 			<< locationName(mLOC.getLocation()) << endl;
 		if (mLOC.getLocation() != 克里斯镇) {//地点：安全点
 			SelectMove_Wild();
@@ -1137,7 +1759,6 @@ void Explore(double poa, double pob, double poc, Location_Wild lw) {
 void SelectMove_Wild() {
 	int key = 0;
 	ShowLocation(lplayer);
-	Sleep(1500);
 	cout << "你的下一步是！" << endl;
 	Sleep(1000);
 	cout << "1:探索此区域" << endl;
@@ -1160,55 +1781,41 @@ void SelectMove_Wild() {
 	}
 }
 void PropShop() {
-	int PropShop_key, n;
 	cout << "请选择您要购买的商品！" << endl;
-	cout << "1：粗制生命药水 " << chpp.cost << "coin / 1\n"
-		<< "2：制式生命药水 " << shpp.cost << "coin / 1\n"
-		<< "0:返回" << endl;
-	cout << "输入：";
-	cin >> PropShop_key;
-	system("cls");
-	switch (PropShop_key) {
-	case(1):
-		cout << "请输入购买数量" << endl;
-		cin >> n;
-		system("cls");
-		if (n <= 0) { PropShop(); }
-		if (oplayer.Coin < n * chpp.cost) {
-			cout << "余额不足！！\n" << endl;
-			PropShop();
+	vector<Prop_Potion*> filterPotion;
+	for (auto* a_addr_potion : addr_potion) {
+		if (a_addr_potion->n > -1) {
+			filterPotion.push_back(a_addr_potion);
 		}
-		else {
-			oplayer.Coin = oplayer.Coin - n * chpp.cost;
-			chpp.n = chpp.n + n;
-			cout << "您已购买 " << n << " 瓶粗制生命药水！\n" <<
-				"您的余额为" << oplayer.Coin << " 谢谢光临!\n" << endl;
-			PropShop();
-		}break;
-	case(2):
-		cout << "请输入购买数量" << endl;
-		cin >> n;
-		system("cls");
-		if (n <= 0) { PropShop(); }
-		if (oplayer.Coin < n * shpp.cost) {
-			cout << "余额不足！！\n" << endl;
-			PropShop();
-		}
-		else {
-			oplayer.Coin = oplayer.Coin - n * shpp.cost;
-			shpp.n = shpp.n + n;
-			cout << "您已购买 " << n << " 瓶制式生命药水！\n" <<
-				"您的余额为" << oplayer.Coin << " 谢谢光临!\n" << endl;
-			PropShop();
-		}break;
-	case(0):
-		Shop();
-	default:
-		cout << "无效输入，请重新选择！\n" << endl;
-		cin.clear();
-		cin.ignore(1024, '\n');
-		PropShop();
 	}
+	int i = 1;
+	for (const auto& af : filterPotion) {
+		cout << i++ << ": ";
+		af->ShowShopAvailProp_Potion();
+	}
+	cout << "\n0：返回" << endl;
+	int key;
+	cin >> key;
+	system("cls");
+	if (key == 0) { Shop(); }
+	if (key > 0 && key <= potion.size()) {
+		Prop_Potion& selectedPotion = *filterPotion[key - 1];
+		cout << "请输入购买数量：";
+		int num;
+		cin >> num;
+		system("cls");
+		if (oplayer.Coin < selectedPotion.cost * num) {
+			cout << "可惜你还太穷。" << endl;
+			PropShop();
+		}
+		else {
+			oplayer.Coin = oplayer.Coin - selectedPotion.cost * num;
+			selectedPotion.n += num;
+			cout << "购买完成！富哥您吉祥！" << endl;
+			PropShop();
+		}
+	}
+	else { cout << "无效输入" << endl; PropShop(); }
 }
 void Shop() {
 	int Shop_key_1;
@@ -1327,14 +1934,28 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 	int n_arm2001;
 	int n_arm3001;
 	int n_arm4001;
-	int n_at_strike_001;
+	int n_at_chop_001;//技能编码
 	int n_at_stab_001;
+	int num_hold;
+	int num_head;
+	int num_body;
+	int num_hand;
+	int num_foot;
+	int n_at_strike_001;
+	int n_at_strike_002;
+	int n_bf_nothing_001;
+	int n_bf_nothing_002;
+	int n_bf_nothing_003;
+	int n_at_chop_002;
 	string serialize() const {
-		return to_string(Lev) + "," + to_string(Exp) + "," + to_string(Coin) + ","
-			+ to_string(n_p0001) + "," + to_string(n_p0002) + "," + to_string(Safepoint)
-			+ "," + to_string(n_w0001) + "," + to_string(n_arm1001) + "," + to_string(n_arm2001)
-			+ "," + to_string(n_arm3001) + "," + to_string(n_arm4001) + "," + to_string(n_at_strike_001)
-			+ "," + to_string(n_at_stab_001);
+		return to_string(Lev)			       + "," + to_string(Exp)			    + "," + to_string(Coin) 
+			+ "," + to_string(n_p0001)		   + "," + to_string(n_p0002)		    + "," + to_string(Safepoint)
+			+ "," + to_string(n_w0001)		   + "," + to_string(n_arm1001)			+ "," + to_string(n_arm2001)
+			+ "," + to_string(n_arm3001)	   + "," + to_string(n_arm4001)			+ "," + to_string(n_at_chop_001)
+			+ "," + to_string(n_at_stab_001)   + "," + to_string(num_hold)			+ "," + to_string(num_head)
+			+ "," + to_string(num_body)		   + "," + to_string(num_hand)			+ "," + to_string(num_foot) 
+			+ "," + to_string(n_at_strike_001) + "," + to_string(n_at_strike_002)   + "," + to_string(n_bf_nothing_001) 
+			+ "," + to_string(n_bf_nothing_002)+ "," + to_string(n_bf_nothing_003)  + "," + to_string(n_at_chop_002);
 	}
 	bool deserialize(const string& data) {
 		istringstream iss(data);
@@ -1353,7 +1974,7 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 				return false;
 			}
 		}
-		values.resize(14, 0);//新增内容时增加n
+		values.resize(25, 0);//新增内容时增加n
 		//values[5] = 0;		//为新内容设置默认值（后兼容）
 		oplayer.Lev = values[0];
 		oplayer.Exp = values[1];
@@ -1373,10 +1994,32 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 		arm3001.n = n_arm3001;
 		n_arm4001 = values[10];
 		arm4001.n = n_arm4001;
-		n_at_strike_001 = values[11];
-		at_strike_001.n = n_at_strike_001;
+		n_at_chop_001 = values[11];
+		at_chop_001.n = n_at_chop_001;
 		n_at_stab_001 = values[12];
 		at_stab_001.n = n_at_stab_001;
+		num_hold = values[13];
+		if (num_hold == 1) { oplayer.GearWeapon(w0001); }
+		num_head = values[14];
+		if (num_head == 1001) { oplayer.GearArmor_head(arm1001); }
+		num_body = values[15];
+		if (num_body == 2001) { oplayer.GearArmor_body(arm2001); }
+		num_hand = values[16];
+		if (num_hand == 3001) { oplayer.GearArmor_hand(arm3001); }
+		num_foot = values[17];
+		if (num_foot == 4001) { oplayer.GearArmor_foot(arm4001); }
+		n_at_strike_001 = values[18];
+		at_strike_001.n = n_at_strike_001;
+		n_at_strike_002 = values[19];
+		at_strike_002.n = n_at_strike_002;
+		n_bf_nothing_001 = values[20];
+		bf_nothing_001.n = n_bf_nothing_001;
+		n_bf_nothing_002 = values[21];
+		bf_nothing_002.n = n_bf_nothing_002;
+		n_bf_nothing_003 = values[22];
+		bf_nothing_003.n = n_bf_nothing_003;
+		n_at_chop_002 = values[23];
+		at_chop_002.n = n_at_chop_002;
 		return true;
 	}
 };
@@ -1391,6 +2034,7 @@ void saveGame(const SaveData& saveData, const string& filename) {
 	file << saveData.serialize();
 	file.close();
 }
+
 bool loadGame(SaveData& saveData, const string& filename) {
 	ifstream file(filename);
 	if (!file.is_open()) {
@@ -1404,9 +2048,10 @@ bool loadGame(SaveData& saveData, const string& filename) {
 }
 
 void Save() {//保存
-	SaveData save01 = { oplayer.Lev,oplayer.Exp,oplayer.Coin,safepoint.location,
-		chpp.n,shpp.n,w0001.n ,arm1001.n,arm2001.n,arm3001.n,arm4001.n,at_strike_001.n
-		,at_stab_001.n};
+	SaveData save01 = {oplayer.Lev,oplayer.Exp,oplayer.Coin,safepoint.location,
+		chpp.n,shpp.n,w0001.n ,arm1001.n,arm2001.n,arm3001.n,arm4001.n,at_chop_001.n
+		,at_stab_001.n,oplayer.hold_num,oplayer.head_num,oplayer.body_num,oplayer.hand_num,oplayer.foot_num
+		,at_strike_001.n,at_strike_002.n ,bf_nothing_001.n,bf_nothing_002.n,bf_nothing_003.n,at_chop_002.n};
 	saveGame(save01, "save01.txt");
 }
 void LoadGame() {
