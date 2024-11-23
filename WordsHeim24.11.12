@@ -27,9 +27,10 @@ void Shop();
 void LoadGame();
 void Save();
 enum Location {//地点：定义
-	克里斯镇, 克里斯镇北郊, 克里斯镇东郊, 克里斯大洞窟,克里斯大洞窟深处
+	克里斯镇, 克里斯镇北郊, 克里斯镇东郊, 克里斯大洞窟,克里斯大洞窟深处 ,克劳斯南部燃苇海岸
 };
-struct LOC {
+class LOC {
+public:
 	Location location;
 	Location getLocation() const {
 		return location;
@@ -76,8 +77,10 @@ public:
 	}
 };
 Drop primary_slime_lump, goblin_ear, wrinkled_tie, class_whip, cave_king_prestige, little_woodenShield_fragment, woodenShield_fragment;
+Drop reed_ember;
 vector<Drop*>addr_Drop = {
-	&primary_slime_lump, &goblin_ear, &wrinkled_tie, &class_whip, &cave_king_prestige, &little_woodenShield_fragment, &woodenShield_fragment
+	&primary_slime_lump, &goblin_ear, &wrinkled_tie, &class_whip, &cave_king_prestige, &little_woodenShield_fragment, &woodenShield_fragment,
+	&reed_ember
 };
 void SetDrop(){
 	primary_slime_lump.setDrop("稀粘液块");
@@ -87,6 +90,7 @@ void SetDrop(){
 	cave_king_prestige.setDrop("洞窟之王的威压");
 	little_woodenShield_fragment.setDrop("小木盾的残片");
 	woodenShield_fragment.setDrop("木盾破片");
+	reed_ember.setDrop("燃苇余烬");
 }
 void AvailDrop() {//道具：药水可用
 	vector<Drop*> filterDrop;
@@ -110,6 +114,7 @@ public:
 	Drop* drop1;
 	Drop* drop2;
 	Drop* drop3;
+	string DESP;
 	double Multiply;
 	double insMultiply;
 	int n;
@@ -118,7 +123,7 @@ public:
 	int level;
 	int lasttime;
 	int inslasttime;
-	void setSkill(string stn, string sty, Element se1, Element se2, int sn, double sm, int ss,Drop& d1,Drop& d2, Drop& d3, int lt=0,int sl = 1) {
+	void setSkill(string stn, string sty, Element se1, Element se2, int sn, double sm, int ss,Drop& d1,Drop& d2, Drop& d3,string sD, int lt=0,int sl = 1) {
 		NAME = stn;
 		type = sty;
 		ele1 = se1;
@@ -131,6 +136,7 @@ public:
 		drop1 = &d1;
 		drop2 = &d2;
 		drop3 = &d3;
+		DESP = sD;
 		level = sl;
 		lasttime = lt;
 		inslasttime = lt;
@@ -150,19 +156,20 @@ public:
 		}
 	}
 };//技能初始化
-Skill Sklnothing,at_chop_001, at_stab_001,at_strike_001,at_strike_002,bf_nothing_001,bf_nothing_002,bf_nothing_003,at_chop_002,mag_fire_001;
-vector<Skill*>t_Skill{ &at_chop_001, &at_stab_001,&at_strike_001 ,&at_strike_002,&bf_nothing_001 ,&bf_nothing_002,&bf_nothing_003,&at_chop_002,&mag_fire_001 };
+Skill Sklnothing,at_chop_001, at_stab_001,at_strike_001,at_strike_002,bf_nothing_001,bf_nothing_002,bf_nothing_003,at_chop_002,mag_fire_001,bf_nothing_004;
+vector<Skill*>t_Skill{ &at_chop_001, &at_stab_001,&at_strike_001 ,&at_strike_002,&bf_nothing_001 ,&bf_nothing_002,&bf_nothing_003,&at_chop_002,&mag_fire_001 ,&bf_nothing_004};
 void SetSkill() {//技能
-	Sklnothing.setSkill("无", "无", nothing, nothing, 0, 0, 0,primary_slime_lump,primary_slime_lump,primary_slime_lump);
-	at_chop_001.setSkill("斜斩", "攻击", chop,nothing,0, 1.5, 20,goblin_ear,wrinkled_tie,woodenShield_fragment);
-	at_stab_001.setSkill("突刺", "攻击", stab,nothing,0, 1.5, 20,goblin_ear,wrinkled_tie,woodenShield_fragment);
-	at_strike_001.setSkill("冲撞", "攻击", strike,nothing, 0, 1, 20,primary_slime_lump,little_woodenShield_fragment,woodenShield_fragment);
-	at_strike_002.setSkill("普通一拳", "攻击", strike, nothing, 0, 1.3, 20,goblin_ear,little_woodenShield_fragment,woodenShield_fragment);
-	bf_nothing_001.setSkill("沉淀", "增益atk", nothing, nothing, 0, 2, 15,goblin_ear,woodenShield_fragment,cave_king_prestige,5);
-	bf_nothing_002.setSkill("金钱就是力量", "特殊", nothing, nothing, 0, 3, 10,goblin_ear,class_whip,class_whip,5);
-	bf_nothing_003.setSkill("盾之招架", "招架", strike, chop, 0, 0.5, 8,little_woodenShield_fragment,woodenShield_fragment,cave_king_prestige,2);
-	at_chop_002.setSkill("忒尔的大上段斩", "攻击", chop, nothing, 0, 1.8, 15,wrinkled_tie,woodenShield_fragment,cave_king_prestige);
-	mag_fire_001.setSkill("点燃", "元素攻击", fire, nothing, 1, 1.3, 15, primary_slime_lump, primary_slime_lump, primary_slime_lump);
+	Sklnothing.setSkill("无", "无", nothing, nothing, 0, 0, 0,primary_slime_lump,primary_slime_lump,primary_slime_lump,"无");
+	at_chop_001.setSkill("斜斩", "攻击", chop,nothing,0, 1.5, 20,goblin_ear,wrinkled_tie,woodenShield_fragment,"旨在利用剑刃的锋利度与挥剑者的力道相结合进行斜向砍击，对对手造成有效的斩击伤害。");
+	at_stab_001.setSkill("突刺", "攻击", stab,nothing,0, 1.4, 20,goblin_ear,wrinkled_tie,woodenShield_fragment,"用于快速准确地攻击对手的要害部位，造成刺击伤害，或许还可以透过盾牌的防御直接对持盾者造成伤害。");
+	at_strike_001.setSkill("冲撞", "攻击", strike,nothing, 0, 1, 20,primary_slime_lump,little_woodenShield_fragment,woodenShield_fragment,"利用惯性将身体撞向对手，造成打击伤害。");
+	at_strike_002.setSkill("普通一拳", "攻击", strike, nothing, 0, 1.5, 20,goblin_ear,little_woodenShield_fragment,woodenShield_fragment,"从沉淀哥布林处领悟的招式，对对手造成有效的打击伤害，可惜使用者并不会成为突破限制器的那个男人。");
+	bf_nothing_001.setSkill("沉淀", "增益atk", nothing, nothing, 0, 2, 15,goblin_ear,woodenShield_fragment,cave_king_prestige,"从哥布林社会中领会到的招式，可提高物理攻击力，或许每个人都有属于自己的洞窟，而你能否走出来呢？",5);
+	bf_nothing_002.setSkill("金钱就是力量", "特殊", nothing, nothing, 0, 3, 10,goblin_ear,class_whip,class_whip,"消耗5金币，提高自身防御力，钱一直花...",5);
+	bf_nothing_003.setSkill("盾之招架", "招架", strike, chop, 0, 0.5, 8,little_woodenShield_fragment,woodenShield_fragment,cave_king_prestige,"从持盾者处习得的招架技巧，提高自身斩击与打击抗性。",2);
+	at_chop_002.setSkill("忒尔的大上段斩", "攻击", chop, nothing, 0, 1.8, 15,wrinkled_tie,woodenShield_fragment,cave_king_prestige,"通过观察忒尔的动作领会到的剑技，从高位置向下猛烈砍击，用于攻击对手的头部或肩部，造成可观的斩击伤害。");
+	mag_fire_001.setSkill("点燃", "元素攻击", fire, nothing, 0, 1.3, 15, reed_ember, reed_ember, reed_ember,"通过观察燃蛾习得的火元素魔法，燎原之烈焰起于一草之火星。");
+	bf_nothing_004.setSkill("初级疗愈", "特殊", nothing, nothing, 0, 0.3, 7, primary_slime_lump, reed_ember, reed_ember, "人们在的地方就有希望，纯白的光点将为人们带来温暖和小小的希冀。");
 }
 Skill* m_Former_Skill = &Sklnothing;
 class Prop_Weapon {//武器
@@ -206,14 +213,15 @@ public:
 		wATK = ins_wATK + (ins_wATK / 2) * (level - 1);
 	}
 };
-Prop_Weapon w0000, w0001;//武器：初始化
+Prop_Weapon w0000, w0001, w0002;//武器：初始化
 void SelectAvailWeapon(const vector<Prop_Weapon*>& weapon);
 void SelectShopWeapon(const vector<Prop_Weapon*>& weapon);
 void SetWeapon() {//武器：设置物理和元素攻击力(不要是奇数），数量，价格（不要是奇数））
 	w0000.setWeapon("无", 0, "空手", 0, 0, 1, 0, primary_slime_lump, primary_slime_lump, primary_slime_lump);
 	w0001.setWeapon("轻型物理", 1, "克里斯学徒的试做铜剑", 2, 0, 0, 12, primary_slime_lump, goblin_ear, goblin_ear);
+	w0002.setWeapon("修士书", 2, "边远教区的见习修士书", 0, 1, 0, 10, reed_ember, reed_ember, reed_ember);
 }
-vector<Prop_Weapon*>t_weapon{ &w0000,&w0001 };
+vector<Prop_Weapon*>t_weapon{ &w0000,&w0001 ,&w0002};
 void AvailWeapon(const vector<Prop_Weapon*>& za_weapon) {//武器：可用
 	vector<Prop_Weapon*> filterWeapon;
 	for(auto* fa_weapon:za_weapon){
@@ -365,21 +373,25 @@ void xAvailArmor(const vector<Prop_Armor*>& armor) {//防具：未获得
 class Blessing {
 public:
 	string NAME;
+	string DESP;
+	string EFF;
 	int n ;
 	void print() const {
 		std::cout << NAME << std::endl;
 	}
-	void setBlessing(string sN,int sn = 0){
+	void setBlessing(string sN,string sE,string sD,int sn = 0){
 		NAME = sN;
+		EFF = sE;
+		DESP = sD;
 		n = sn;
 	}
 };
 Blessing b0000,b0001,b0002;
 vector<Blessing*>t_Blessing{ &b0000,&b0001,&b0002 };
 void SetBlessing() {
-	b0000.setBlessing("空", 1);
-	b0001.setBlessing("微缩的君权");
-	b0002.setBlessing("消灾之财");
+	b0000.setBlessing("空","空","空", 1);
+	b0001.setBlessing("微缩的君权","物理攻击力提升5%","生命之间存在权，大到世界国家，小到家庭或是一群玩闹的孩童，其中的佼佼者莫不向四周散发强势的光。");
+	b0002.setBlessing("消灾之财","刺击抗性提高20%","钱财筑起的祥和莫非假象，灾厄总会敲响自是者的门扉。");
 }
 class player {
 public:
@@ -499,7 +511,7 @@ public:
 		cout << "---------------------------------------------" << endl;
 		cout << "选择：" << endl;
 	}
-	void SelectBlessing() {//技能：选择替换技能
+	void SelectBlessing() {//技能：选择替换佑物
 		int key;
 		if (cin >> key) {
 			system("cls");
@@ -526,8 +538,9 @@ public:
 			ShowBlessing_SelectMove();
 		}
 	}
-	void ShowAvailBless(int key2) {//技能：显示可替换技能
+	void ShowAvailBless(int key2) {//技能：显示可替换佑物
 		int index;
+		int key;
 		int count = 1;
 		cout << "============================" << endl;
 		cout << "0: 返回	   佑物" << endl;
@@ -542,8 +555,27 @@ public:
 		if (cin >> index) {
 			system("cls");
 			if (index >= 1 && index <= static_cast<int>(PlayerBlessing.size())) {
-				GearBless(key2, index);
-				ShowBlessing_SelectMove();
+				cout << "< " << PlayerBlessing[index - 1]->NAME << " >\n" << endl;
+				cout << PlayerBlessing[index - 1]->EFF << '\n' << endl;
+				cout << PlayerBlessing[index - 1]->DESP << '\n' << endl;
+				cout << "0：返回" << endl;
+				cout << "1：装备佑物" << endl;
+				if (cin >> key) {
+					system("cls");
+					if (key == 1) {
+						GearBless(key2, index);
+						ShowBlessing_SelectMove();
+					}
+					else {
+						ShowBlessing_SelectMove();
+					}
+				} 
+				else {
+					system("cls");
+					cin.clear();
+					cin.ignore(1024, '\n');
+					ShowBlessing_SelectMove();
+				}
 			}
 			else {
 				ShowBlessing_SelectMove();
@@ -754,6 +786,7 @@ public:
 	}
 	void ShowAvailSkill(int key2) {//技能：显示可替换技能
 		int index;
+		int key;
 		int count = 1;
 		cout << "============================" << endl;
 		cout << "0: 返回	   技能" << endl;
@@ -768,8 +801,38 @@ public:
 		if (cin >> index) {
 			system("cls");
 			if (index >= 1 && index <= static_cast<int>(PlayerSkill.size())) {
-				GearSkill(key2, index);
-				ShowSkill_SelectMove();
+				PlayerSkill[index - 1]->Skill_LevelUp();
+				cout << "< " << PlayerSkill[index - 1]->NAME << " >" <<"(lev." <<PlayerSkill[index-1]->level<<")\n" << endl;
+				cout << "元素类型：" << PlayerSkill[index - 1]->ele1.NAME;
+				if (PlayerSkill[index - 1]->ele2.NAME != "无") {
+					cout << "/" << PlayerSkill[index - 1]->ele2.NAME << endl;
+				}
+				else { cout << endl; }
+				cout << "技能倍率：" << PlayerSkill[index - 1]->Multiply << endl;
+				cout << "最大SP：" << PlayerSkill[index - 1]->spMax << endl;
+				if (PlayerSkill[index - 1]->lasttime != 0) {
+					cout << "持续回合：" << PlayerSkill[index - 1]->lasttime << endl;
+				}
+				cout << endl;
+				cout << PlayerSkill[index - 1]->DESP << '\n' << endl;
+				cout << "0：返回" << endl;
+				cout << "1：装备技能" << endl;
+				if (cin >> key) {
+					system("cls");
+					if (key == 1) {
+						GearSkill(key2, index);
+						ShowSkill_SelectMove();
+					}
+					else {
+						ShowSkill_SelectMove();
+					}
+				}
+				else {
+					system("cls");
+					cin.clear();
+					cin.ignore(1024, '\n');
+					ShowSkill_SelectMove();
+				}
 			}
 			else {
 				ShowSkill_SelectMove();
@@ -796,6 +859,9 @@ public:
 		if (hold->type == "轻型物理") {
 			if(at_chop_001.n==0){ PlayerSkill.push_back(&at_chop_001); at_chop_001.n++; }
 			if(at_stab_001.n==0){ PlayerSkill.push_back(&at_stab_001); at_stab_001.n++; }
+		}
+		if (hold->type == "修士书") {
+			if (bf_nothing_004.n == 0) { PlayerSkill.push_back(&bf_nothing_004); bf_nothing_004.n++; }
 		}
 	}
 	void ResetSp() {//重置技能使用次数
@@ -1103,7 +1169,7 @@ public:
 			return;
 		}
 		double damage_double;
-		damage_double = m.ATK * skl->Multiply;
+		damage_double = m.ATK * skl->insMultiply;
 		if (skl->ele1.NAME == "火") {
 			damage_double *= (1 - oplayer.fire_resist);
 		}
@@ -1177,79 +1243,87 @@ public:
 		}
 		if (skl->type == "增益atk") {
 			cout << m.NAME << " 发动了 " << skl->NAME << endl;
-			m.ATK += skl->Multiply;
+			m.ATK += skl->insMultiply;
 			cout << m.NAME << " 看上去更不好惹了... " << endl;
-			if (m_atkbf_Timer1 == 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->Multiply; }
-			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 == 0) { m_atkbf_Timer2 = skl->lasttime; m_atkbf_eff2 = skl->Multiply;}
-			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 != 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->Multiply;}
+			if (m_atkbf_Timer1 == 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->insMultiply; }
+			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 == 0) { m_atkbf_Timer2 = skl->lasttime; m_atkbf_eff2 = skl->insMultiply;}
+			else if (m_atkbf_Timer1 != 0 && m_atkbf_Timer2 != 0) { m_atkbf_Timer1 = skl->lasttime; m_atkbf_eff1 = skl->insMultiply;}
 		}
 		if (skl->NAME == "金钱就是力量") {
 			cout << m.NAME << " 发动了 " << skl->NAME << endl;
-			m.DEF += skl->Multiply;
+			m.DEF += skl->insMultiply;
 			cout << "花钱消灾，这是常识。" << endl;
-			if (m_defbf_Timer1 == 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->Multiply; }
-			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 == 0) { m_defbf_Timer2 = skl->lasttime; m_defbf_eff2 = skl->Multiply; }
-			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 != 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->Multiply; }
+			if (m_defbf_Timer1 == 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->insMultiply; }
+			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 == 0) { m_defbf_Timer2 = skl->lasttime; m_defbf_eff2 = skl->insMultiply; }
+			else if (m_defbf_Timer1 != 0 && m_defbf_Timer2 != 0) { m_defbf_Timer1 = skl->lasttime; m_defbf_eff1 = skl->insMultiply; }
 		}
 		if (skl->type == "招架") {
 			cout << m.NAME << " 发动了 " << skl->NAME << endl;
 			m_parry_Timer = 2;
-			m.nothing_resist += skl->Multiply;
+			m.nothing_resist += skl->insMultiply;
 			if (skl->ele1.NAME == "斩") {
-				m.chop_resist += skl->Multiply;
+				m.chop_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "刺") {
-				m.stab_resist += skl->Multiply;
+				m.stab_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "打") {
-				m.strike_resist += skl->Multiply;
+				m.strike_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "火") {
-				m.fire_resist += skl->Multiply;
+				m.fire_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "风") {
-				m.wind_resist += skl->Multiply;
+				m.wind_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "雷") {
-				m.thunder_resist += skl->Multiply;
+				m.thunder_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "地") {
-				m.earth_resist += skl->Multiply;
+				m.earth_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "水") {
-				m.water_resist += skl->Multiply;
+				m.water_resist += skl->insMultiply;
 			}
 			if (skl->ele1.NAME == "冰") {
-				m.ice_resist += skl->Multiply;
+				m.ice_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "斩") {
-				m.chop_resist += skl->Multiply;
+				m.chop_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "刺") {
-				m.stab_resist += skl->Multiply;
+				m.stab_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "打") {
-				m.strike_resist += skl->Multiply;
+				m.strike_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "火") {
-				m.fire_resist += skl->Multiply;
+				m.fire_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "风") {
-				m.wind_resist += skl->Multiply;
+				m.wind_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "雷") {
-				m.thunder_resist += skl->Multiply;
+				m.thunder_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "地") {
-				m.earth_resist += skl->Multiply;
+				m.earth_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "水") {
-				m.water_resist += skl->Multiply;
+				m.water_resist += skl->insMultiply;
 			}
 			if (skl->ele2.NAME == "冰") {
-				m.ice_resist += skl->Multiply;
+				m.ice_resist += skl->insMultiply;
 			}
 			cout << m.NAME << " 严正以待！" << endl;
+		}
+		else if (skl->NAME == "初级疗愈") {
+			cout << m.NAME<<" 发动了 " << skl->NAME << endl;
+			m.HP += ATK * skl->insMultiply;
+			if (m.HP > m.HPmax) {
+				m.HP = m.HPmax;
+			}
+			cout << "温暖的白色光点覆盖了" << m.NAME << "。" << endl;
 		}
 	}
 	void mAttack(monster& m) {
@@ -1277,7 +1351,7 @@ public:
 	}
 };
 //怪物：初始化
-monster Slime, Goblin, Elite_Goblin, Strong_Goblin, Capitalist_Goblin, Taer, WoodenShield_Goblin, Shield_Elite_Goblin_Leader;
+monster Slime, Goblin, Elite_Goblin, Strong_Goblin, Capitalist_Goblin, Taer, WoodenShield_Goblin, Shield_Elite_Goblin_Leader,Cross_Burning_Moth;
 void setMonster() {//怪物：设置Weak1,Weak2,Resist1,Resist2,技能1234,HP,DEF,ATK,Exp,Coin//
 	Slime.setProperty("史莱姆", strike, earth, water, fire, at_strike_001, at_strike_001, at_strike_001, at_strike_001, "咕噜噜噜...", primary_slime_lump, 4, 0, 2, 2, 1);
 	Goblin.setProperty("哥布林", fire, thunder, nothing, nothing, at_stab_001, at_stab_001, at_stab_001, at_stab_001, "挠了挠头。", goblin_ear, 8, 0, 5, 4, 3);
@@ -1287,6 +1361,7 @@ void setMonster() {//怪物：设置Weak1,Weak2,Resist1,Resist2,技能1234,HP,DE
 	Taer.setProperty("忒尔", fire, thunder, nothing, strike, at_chop_002, bf_nothing_001, bf_nothing_003, at_stab_001, "发出哥布林少有的低沉的咆哮。", cave_king_prestige, 60, 6, 9, 35, 30, b0001);
 	WoodenShield_Goblin.setProperty("小木圆盾哥布林", fire, thunder, chop, strike, at_stab_001, at_stab_001, bf_nothing_003, bf_nothing_003, "敲打了两下自己的木制小圆盾。", little_woodenShield_fragment, 8, 4, 5, 6, 4);
 	Shield_Elite_Goblin_Leader.setProperty("持盾精英哥布林组长", fire, thunder, chop, strike, at_chop_001, at_stab_001, bf_nothing_001, bf_nothing_003, "发出了得意的哼哼。", woodenShield_fragment, 26, 6, 7, 16, 12);
+	Cross_Burning_Moth.setProperty("克劳斯苇草燃蛾", wind, stab, fire, nothing, at_strike_001, mag_fire_001, at_strike_001, mag_fire_001, "扇了扇翅膀，抖出火星。", reed_ember, 5, 0, 3, 3, 1);
 }
 
 class Location_Wild {
@@ -1300,12 +1375,13 @@ public:
 		TreasureCoin = tc;
 	}
 };
-Location_Wild LW001, LW002, LW003, LW004;
+Location_Wild LW001, LW002, LW003, LW004,LW005;
 void SetLocation_Wild() {//地点：野外探索参数设置
 	LW001.setLocation_Wild(Slime, Goblin, Slime, 1);
 	LW002.setLocation_Wild(WoodenShield_Goblin, Strong_Goblin, Slime, 2);
 	LW003.setLocation_Wild(WoodenShield_Goblin, Elite_Goblin, Capitalist_Goblin, 4);
 	LW004.setLocation_Wild(Elite_Goblin,Shield_Elite_Goblin_Leader, Taer,5);
+	LW005.setLocation_Wild(Slime, Cross_Burning_Moth, Cross_Burning_Moth, 1);
 }
 class Prop_Potion {
 public:
@@ -1407,7 +1483,147 @@ void ShowProp() {
 		ShowProp();
 	}
 }
-
+void NounIntroduce_NewGame() {
+	cout << "以下为本游戏重点概念说明:" << endl;
+	cout << "1、汲技：战斗中，玩家可通过此选项以一定概率获取上一回合中魔物所释放的技能，从而将其技能加入自己的技能库中。\n" << endl;
+	cout << "2、佑物：击杀指定魔物或是完成任务（目前还没有）得到的祝福道具，可以从各方面提高玩家的基础属性、技能性能等。\n" << endl;
+	cout << "3、武器默认技能：当第一次获得某种类型武器或是特定武器时，获得武器具有的默认技能，自动加入玩家的技能库中。\n" << endl;
+	cout << "4、摆pose：战斗中，用于玩家跳过当前回合。\n" << endl;
+	cout << "5、元素：本游戏中存在火、水、风、雷、地、冰六种元素与斩、刺、打三种物理攻击类型，统称为九种属性，（元素）攻击类型技能至少具有一种属性。"
+		<< "<攻击>属于无属性，所有<招架>类型技能均会提升对<攻击>的抗性。物理伤害受防御力影响，而元素伤害无视防御力。\n" << endl;
+	cout << "6、弱点与抗性：本游戏中的魔物至多存在两个弱点属性与两个抗性属性，当（元素）攻击类型技能为弱点属性，伤害提高，为抗性属性则伤害降低。\n" << endl;
+	cout << "输入1以继续。" << endl;
+	int key;
+	if (cin >> key) {
+		system("cls");
+		return;
+	}
+	else {
+		system("cls");
+		cin.clear();
+		cin.ignore(1024, '\n');
+		return;
+	}
+}
+void NounIntroduce() {
+	cout << "0:返回" << endl;
+	cout << "以下为本游戏重点概念说明:" << endl;
+	cout << "1、汲技" << endl;
+	cout << "2、佑物" << endl;
+	cout << "3、武器默认技能" << endl;
+	cout << "4、摆pose" << endl;
+	cout << "5、元素" << endl;
+	cout << "6、弱点与抗性" << endl;
+	cout << "选择：" << endl;
+	int key;
+	int key2;
+	if (cin >> key) {
+		system("cls");
+		if (key == 1) {
+			cout << "0:返回" << endl;
+			cout << "汲技" << endl;
+			cout << "战斗中，玩家可通过此选项以一定概率获取上一回合中魔物所释放的技能，从而将其技能加入自己的技能库中。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 2) {
+			cout << "0:返回" << endl;
+			cout << "佑物" << endl;
+			cout << "击杀指定魔物或是完成任务（目前还没有）得到的祝福道具，可以从各方面提高玩家的基础属性、技能性能等。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 3) {
+			cout << "0:返回" << endl;
+			cout << "武器默认技能" << endl;
+			cout << "当第一次获得某种类型武器或是特定武器时，获得武器具有的默认技能，自动加入玩家的技能库中。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 4) {
+			cout << "0:返回" << endl;
+			cout << "摆pose" << endl;
+			cout << "战斗中，用于玩家跳过当前回合。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 5) {
+			cout << "0:返回" << endl;
+			cout << "元素" << endl;
+			cout << "本游戏中存在火、水、风、雷、地、冰六种元素与斩、刺、打三种物理攻击类型，统称为九种属性，（元素）攻击类型技能至少具有一种属性。\n" << endl <<
+				"<攻击>属于无属性，所有<招架>类型技能均会提升对<攻击>的抗性。\n" << endl << "物理伤害受防御力影响，而元素伤害无视防御力。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 6) {
+			cout << "0:返回" << endl;
+			cout << "弱点与抗性" << endl;
+			cout << "本游戏中的魔物至多存在两个弱点属性与两个抗性属性。"<<endl<<"当（元素）攻击类型技能为弱点属性，伤害提高，为抗性属性则伤害降低。" << endl;
+			if (cin >> key2) {
+				system("cls");
+				NounIntroduce();
+			}
+			else {
+				system("cls");
+				cin.clear();
+				cin.ignore(1024, '\n');
+				NounIntroduce();
+			}
+		}
+		else if (key == 0) {
+			SelectMove();
+		}
+		else {
+			NounIntroduce();
+		}
+	}
+	else {
+		system("cls");
+		cin.clear();
+		cin.ignore(1024, '\n');
+		NounIntroduce();
+	}
+}
 void startGame() {
 	int key;
 	cout << "=========================\n"
@@ -1441,7 +1657,7 @@ void startGame() {
 		Sleep(1400);
 		break;
 	case(2):
-		cout << "你的等级为<1>" << endl;
+		NounIntroduce_NewGame();
 		oplayer.HP = oplayer.HPmax;
 		Sleep(1000);
 		lplayer.setLocation(克里斯镇);
@@ -1456,11 +1672,12 @@ void startGame() {
 }
 
 map<Location, vector<Location>> locationConnections = {//地点：关系
-	{克里斯镇,{克里斯镇北郊,克里斯镇东郊}},
+	{克里斯镇,{克里斯镇北郊,克里斯镇东郊,克劳斯南部燃苇海岸}},
 	{克里斯镇北郊,{克里斯镇}},
 	{克里斯镇东郊,{克里斯镇,克里斯大洞窟}},
 	{克里斯大洞窟,{克里斯镇东郊,克里斯大洞窟深处}},
-	{ 克里斯大洞窟深处,{克里斯大洞窟} }
+	{ 克里斯大洞窟深处,{克里斯大洞窟} },
+	{ 克劳斯南部燃苇海岸,{克里斯镇} }
 };
 string locationName(Location loc) {//地点：枚举数字转字符串
 	switch (loc) {
@@ -1474,6 +1691,8 @@ string locationName(Location loc) {//地点：枚举数字转字符串
 		return"克里斯大洞窟";
 	case 克里斯大洞窟深处:
 		return"克里斯大洞窟深处";
+	case 克劳斯南部燃苇海岸:
+		return"克劳斯南部燃苇海岸";
 	default:
 		return "未知地点";
 	}
@@ -1706,7 +1925,7 @@ void UseGearedSkill(int key2, monster& m) {
 	}
 	else if (oplayer.GearedSkill[key2 - 1]->NAME == "金钱就是力量") {
 		if (oplayer.Coin >= 5) {
-			cout << m.NAME << " 发动了 " << oplayer.GearedSkill[key2 - 1]->NAME << endl;
+			cout << "你发动了 " << oplayer.GearedSkill[key2 - 1]->NAME << endl;
 			oplayer.tDEF += oplayer.GearedSkill[key2 - 1]->Multiply;
 			oplayer.Coin -= 5;
 			cout << "Coin-5：花钱消灾，这是常识。 " << endl;
@@ -1778,6 +1997,14 @@ void UseGearedSkill(int key2, monster& m) {
 			oplayer.ice_resist += oplayer.GearedSkill[key2 - 1]->Multiply;
 		}
 		cout << "你严正以待！" << endl;
+	}
+	else if (oplayer.GearedSkill[key2 - 1]->NAME == "初级疗愈") {
+		cout << " 你发动了 " << oplayer.GearedSkill[key2 - 1]->NAME << endl;
+		oplayer.HP += oplayer.t_mag_ATK * oplayer.GearedSkill[key2 - 1]->Multiply;
+		if (oplayer.HP > oplayer.HPmax) {
+			oplayer.HP = oplayer.HPmax;
+		}
+		cout << "温暖的白色光点覆盖了你。 " << endl;
 	}
 	else {
 		cout << "技能不可使用" << endl;
@@ -2127,6 +2354,7 @@ void SelectMove_Wild() {
 		if (lplayer.location == 克里斯镇东郊) { Explore(0.4, 0.75, 0.9, LW002); }
 		if (lplayer.location == 克里斯大洞窟) { Explore(0.4, 0.75, 0.9, LW003); }
 		if (lplayer.location == 克里斯大洞窟深处) { Explore(0.5, 0.8, 0.9, LW004); }
+		if (lplayer.location == 克劳斯南部燃苇海岸) { Explore(0.4, 0.75, 0.9, LW005); }
 	case(2):
 		Move(lplayer);
 	default:
@@ -2472,7 +2700,7 @@ void Strengthen() {
 	}
 }
 void SelectMove() {
-	enum key { l, q, w, e, a, s, d, f, g, h, z, x };
+	enum key { l, q, w, e, a, s, d, f, g, h, z, x ,c};
 	string key2;
 	std::map<std::string, key> KeyMap = {
 	{"q", key::q},
@@ -2486,6 +2714,7 @@ void SelectMove() {
 	{"h", key::h},
 	{"z", key::z},
 	{"x", key::x},
+	{"c", key::c},
 	};
 	oplayer.ResetSp();
 	oplayer.LevelUp();
@@ -2511,10 +2740,11 @@ void SelectMove() {
 	cout << "-------------------------" << endl;
 	cout << "游戏：" << endl;
 	cout << setw(15) << "z:保存游戏" << setw(15) << "x:退出游戏" << endl;
+	cout << setw(15) << "c:概念说明" << endl;
 	cout << "=========================" << endl;
 	cin >> key2;
 	if (key2 != "q" && key2 != "w" && key2 != "e" && key2 != "a" && key2 != "s" &&
-		key2 != "d" && key2 != "f" && key2 !="g" && key2 != "h" && key2 != "z" && key2 != "x") {
+		key2 != "d" && key2 != "f" && key2 !="g" && key2 != "h" && key2 != "z" && key2 != "x" && key2 != "c") {
 		system("cls");
 		SelectMove();
 	}
@@ -2553,6 +2783,8 @@ void SelectMove() {
 	case(11):
 		exit(0);
 		break;
+	case(12):
+		NounIntroduce();
 	default:
 		cout << "无效输入，请重新选择！\n" << endl;
 		cin.clear();
@@ -2604,6 +2836,11 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 	int l_w0001;
 	int n_b0001;
 	int n_b0002;
+	int n_reed_ember;
+	int n_mag_fire_001;
+	int l_mag_fire_001;
+	int n_w0002;
+	int n_bf_nothing_004;
 	string serialize() const {
 		return to_string(Lev)						  + "," + to_string(Exp)			       + "," + to_string(Coin) 
 			+ "," + to_string(n_p0001)			      + "," + to_string(n_p0002)		       + "," + to_string(Safepoint)
@@ -2618,7 +2855,9 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 			+ "," + to_string(n_woodenShield_fragment)+ "," + to_string(l_at_chop_001)         + "," + to_string(l_at_stab_001)          
 			+ "," + to_string(l_at_strike_001)        + "," + to_string(l_at_strike_002)       + "," + to_string(l_bf_nothing_001)       
 			+ "," + to_string(l_bf_nothing_002)       + "," + to_string(l_bf_nothing_003)      + "," + to_string(l_at_chop_002)		 
-			+ "," + to_string(l_w0001)				  + "," + to_string(n_b0001)			   + "," + to_string(n_b0002);
+			+ "," + to_string(l_w0001)				  + "," + to_string(n_b0001)			   + "," + to_string(n_b0002)
+			+ "," + to_string(n_reed_ember)			  + "," + to_string(n_mag_fire_001)		   + "," + to_string(l_mag_fire_001)
+			+ "," + to_string(n_w0002)				  + "," + to_string(n_bf_nothing_004);
 	}
 	bool deserialize(const string& data) {
 		istringstream iss(data);
@@ -2637,7 +2876,7 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 				return false;
 			}
 		}
-		values.resize(43, 0);//新增内容时增加n
+		values.resize(48, 0);//新增内容时增加n
 		//values[5] = 0;		//为新内容设置默认值（后兼容）
 		oplayer.Lev = values[0];
 		oplayer.Exp = values[1];
@@ -2686,6 +2925,11 @@ struct SaveData {//保存：等级、经验、金币、安全点、道具1、道
 		if (values[39] == 0) { values[39] = 1; }w0001.level = values[39];
 		b0001.n = values[40];
 		b0002.n = values[41];
+		reed_ember.n = values[42];
+		mag_fire_001.n = values[43];
+		if (values[44] == 0) { values[44] = 1; }mag_fire_001.level = values[44];
+		w0002.n = values[45];
+		bf_nothing_004.n = values[46];
 		return true;
 	}
 };
@@ -2720,7 +2964,7 @@ void Save() {//保存
 		,at_strike_001.n,at_strike_002.n ,bf_nothing_001.n,bf_nothing_002.n,bf_nothing_003.n,at_chop_002.n,
 		primary_slime_lump.n,goblin_ear.n,wrinkled_tie.n,class_whip.n,cave_king_prestige.n,little_woodenShield_fragment.n,
 		woodenShield_fragment.n,at_chop_001.level,at_stab_001.level,at_strike_001.level,at_strike_002.level,bf_nothing_001.level,bf_nothing_002.level,
-		bf_nothing_003.level,at_chop_002.level,w0001.level,b0001.n,b0002.n};
+		bf_nothing_003.level,at_chop_002.level,w0001.level,b0001.n,b0002.n,reed_ember.n,mag_fire_001.n,mag_fire_001.level,w0002.n,bf_nothing_004.n};
 	saveGame(save01, "save01.txt");
 }
 void LoadGame() {
